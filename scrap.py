@@ -16,7 +16,7 @@ def pid_exists(pid):
 		return True
 
 class Scraper():
-	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir="./downloaded_videos/"):
+	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir=""):
 		self.baseUrl = baseUrl
 		self.session = session
 		self.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
@@ -53,12 +53,14 @@ class Scraper():
 		bar = None
 		if len(self.processList) == 1: 
 			bar = progressbar.ProgressBar(maxval=num_bars).start()
+		fileName = os.path.join(self.saveDir, fileName)
 		with open(fileName, 'wb') as f:
 			for i, chunk in enumerate(video.iter_content(chunk_size=n_chunk * block_size)):
 				f.write(chunk)
 				if bar is not None:
 					bar.update(i+1)
 				# Add a little sleep so you can see the bar progress
+	
 	def downloadFromResObj(self, resObj, fileName=None):
 		if fileName is None:
 			fileName = resObj["title"] + ".mp4"
@@ -77,6 +79,7 @@ class Scraper():
 						return
 		print ("No valid download link found for " + fileName)
 
+#unused and unfinished
 	def recursiveDownload(self, url, filename=None):
 		response = get(url, headers=self.headers, stream=True)
 		if response.status_code == 200:
@@ -90,8 +93,6 @@ class Scraper():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
 					return
 					
-				
-		
 		
 	def downloadPage(self, url=None, id=None, fileName=None):	
 		assert(url is not None or id is not None)
@@ -101,16 +102,15 @@ class Scraper():
 			id = url.split("/")[-1]
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
+		print(response)
+		exit()
 		jsonsed = json.loads(response.content)
 		self.downloadFromResObj(jsonsed["resObj"], fileName=fileName)
 		return
 
 #https://r6---sn-25ge7ns7.googlevideo.com/videoplayback?expire=1627492603&ei=23QBYf7FKYKjyAWNw6OACw&ip=193.218.118.155&id=4bcf80f442cabe8d&itag=22&source=picasa&begin=0&requiressl=yes&sc=yes&susc=ph&app=fife&ic=388&eaua=_SMKmC0CUL0&mime=video/mp4&vprv=1&prv=1&cnr=14&dur=1377.547&lmt=1572175526293378&sparams=expire,ei,ip,id,itag,source,requiressl,susc,app,ic,eaua,mime,vprv,prv,cnr,dur,lmt&sig=AOq0QJ8wRAIgfkk1eyr2Y39IgInAspeS7gkN9GuCc-Xo-VTqRIKLwa0CID2QKrF9NbMH_hyh2ke8mQAF0r5S2-Yp_jUnpIpbJ11H&redirect_counter=1&rm=sn-c0qlr7e&req_id=b1678ca4872d36e2&cms_redirect=yes&ipbypass=yes&mh=ag&mip=90.127.228.203&mm=32&mn=sn-25ge7ns7&ms=su&mt=1627483384&mv=u&mvi=6&pl=19&lsparams=ipbypass,mh,mip,mm,mn,ms,mv,mvi,pl,sc&lsig=AG3C_xAwRAIgasikFrXN8pC418MuSfWWNIWDiy3o8RsflISe0oP-32kCIC3YHiVRpd1o-AM-mkgc7wivEwq0g1KjBxXFw7BJgkMX
 
-#episodesToDownload = {season_i : [episode_j, episode_j+1]}
-	def downloadAnime(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None):
-		#https://animelon.com/api/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
-		#url = everything after last /
+	def getAnimeList(self, url):
 		url = url.rsplit('/', 1)[-1]
 		url = self.baseUrl + "api/series/" + url
 		print (url)
@@ -123,37 +123,58 @@ class Scraper():
 			time.sleep(1)
 		if (statusCode != 200):
 			print ("Error getting anime info")
-			return
+			return None
 		jsoned = json.loads(response.text)
 		resObj = jsoned["resObj"]
+		return resObj
+
+	def initSaveDir(self, name):
+		if self.saveDir == "":
+			self.saveDir = name
+		os.makedirs(self.saveDir, exist_ok=True)
+
+	def launchBackgroundDownload(self, url, episode, fileName):
+		p = Process(target=self.downloadPage, args=(url, episode, fileName))
+		self.processList.append(p)
+		p.start()
+		time.sleep(self.sleepTime)
+
+	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0):
+		index = 0
+		for episode in episodes:
+			index += 1
+			if episodesToDownload is None or index in episodesToDownload[seasonNumber]:
+				self.waitForFreeProcess()
+				url = self.baseUrl + "video/" + episode
+				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
+				print(fileName, " : ", url)
+				try:
+					self.launchBackgroundDownload(url, index, fileName)
+				except Exception as e:
+					print("Error: Failed to download " + url)
+					print(e)
+
+#episodesToDownload = {season_i : [episode_j, episode_j+1]}
+	def downloadAnime(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None):
+		#https://animelon.com/api/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
+		#url = everything after last /
+		resObj = self.getAnimeList(url)
 		title = resObj["_id"]
 		print("Title:\n", title)
+		self.initSaveDir(title)
 		seasons = resObj["seasons"]
 		for season in seasons:
 			seasonNumber = int(season["number"])
 			if seasonsToDownload is None or seasonNumber in seasonsToDownload:
 				print("Season %d:" % (seasonNumber))
 				episodes = season["episodes"]
-				index = 0
-				for episode in episodes:
-					index += 1
-					if episodesToDownload is None or index in episodesToDownload[seasonNumber]:
-						self.waitForFreeProcess()
-						url = self.baseUrl + "video/" + episode
-						fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
-						print(fileName, " : ", url)
-						try:
-							p = Process(target=self.downloadPage, args=(url, episode, fileName))
-							self.processList.append(p)
-							p.start()
-							time.sleep(self.sleepTime)
-						except Exception as e:
-							print("Error: Failed to download " + url)
-							print(e)
+				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber)
+				
 		self.waitForFreeProcess(processMax=1)
 
 if __name__ == "__main__":
 	scraper = Scraper(processMax=4)
-	url = "https://animelon.com/series/Death%20Note"
+	#url = "https://animelon.com/series/Death%20Note"
+	url = "https://animelon.com/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)"
 	#scraper.downloadPage("https://animelon.com/video/5762abf7fc68e08dcd850d84")
-	scraper.downloadAnime(url, episodesToDownload={1: range(31,99)})
+	scraper.downloadAnime(url)
