@@ -16,18 +16,19 @@ def pid_exists(pid):
 		return True
 
 class Scraper():
-	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5):
+	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir="./downloaded_videos/"):
 		self.baseUrl = baseUrl
 		self.session = session
 		self.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
 		self.videoUserAgent="Mozilla/5=+(dot)+=0 (Linux; Android 9; CPH2015) AppleWebKit/537=+(dot)+=36 (KHTML, like Gecko) Chrome/91=+(dot)+=0=+(dot)+=4472=+(dot)+=164 Mobile Safari/537=+(dot)+=36"
 		self.headers = { "user-agent": self.userAgent }
 		self.apiVideoFormat = "https://animelon.com/api/languagevideo/findByVideo?videoId=%s&learnerLanguage=en&subs=1&cdnLink=1&viewCounter=1"
-		self.session.headers.update(self.headers)	
+		self.session.headers.update(self.headers)
 		self.processList = []
 		self.processMax = processMax
 		self.sleepTime = sleepTime
 		self.maxTries = maxTries
+		self.saveDir = saveDir
 
 	def waitForFreeProcess(self, processMax=None):
 		if processMax is None:
@@ -155,4 +156,4 @@ if __name__ == "__main__":
 	scraper = Scraper(processMax=4)
 	url = "https://animelon.com/series/Death%20Note"
 	#scraper.downloadPage("https://animelon.com/video/5762abf7fc68e08dcd850d84")
-	scraper.downloadAnime(url, episodesToDownload={1: range(7,99)})
+	scraper.downloadAnime(url, episodesToDownload={1: range(31,99)})
