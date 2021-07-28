@@ -100,10 +100,9 @@ class Scraper():
 			url = self.baseUrl + "video/" + id
 		if id is None:
 			id = url.split("/")[-1]
+		print (url)
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
-		print(response)
-		exit()
 		jsonsed = json.loads(response.content)
 		self.downloadFromResObj(jsonsed["resObj"], fileName=fileName)
 		return
