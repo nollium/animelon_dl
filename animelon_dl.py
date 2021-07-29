@@ -18,8 +18,8 @@ def pid_exists(pid):
 		return True
 
 class AnimelonDownloader():
-	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
-		self.baseUrl = baseUrl
+	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
+		self.baseURL = baseURL
 		self.session = session
 		self.userAgent = userAgent
 		self.videoUserAgent="Mozilla/5=+(dot)+=0 (Linux; Android 9; CPH2015) AppleWebKit/537=+(dot)+=36 (KHTML, like Gecko) Chrome/91=+(dot)+=0=+(dot)+=4472=+(dot)+=164 Mobile Safari/537=+(dot)+=36"
@@ -33,8 +33,8 @@ class AnimelonDownloader():
 		self.savePath = savePath
 
 	def __repr__(self):
-		rep = 'AnimelonDownloader(baseUrl="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
-		% (self.baseUrl, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
+		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
+		% (self.baseURL, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
 		return rep
 
 	def waitForFreeProcess(self, processMax=None):
@@ -105,7 +105,7 @@ class AnimelonDownloader():
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None):	
 		assert(url is not None or id is not None)
 		if url is None:
-			url = self.baseUrl + "video/" + id
+			url = self.baseURL + "video/" + id
 		if id is None:
 			id = url.split("/")[-1]
 		apiUrl = self.apiVideoFormat % (id)
@@ -116,7 +116,7 @@ class AnimelonDownloader():
 		
 	def getEpisodeList(self, seriesUrl):
 		seriesName = seriesUrl.rsplit('/', 1)[-1]
-		url = self.baseUrl + "api/series/" + seriesName
+		url = self.baseURL + "api/series/" + seriesName
 		statusCode = 403
 		tries = 0
 		while statusCode != 200 and tries < self.maxTries:
@@ -136,7 +136,7 @@ class AnimelonDownloader():
 			return None
 		return resObj
 
-	def initsavePath(self, name):
+	def initSavePath(self, name):
 		if self.savePath == "":
 			self.savePath = name
 		os.makedirs(self.savePath, exist_ok=True)
@@ -153,7 +153,7 @@ class AnimelonDownloader():
 			index += 1
 			if episodesToDownload is None or index in episodesToDownload[seasonNumber]:
 				self.waitForFreeProcess()
-				url = self.baseUrl + "video/" + episode
+				url = self.baseURL + "video/" + episode
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
 				print(fileName, " : ", url)
 				try:
@@ -170,8 +170,8 @@ class AnimelonDownloader():
 		if resObj is None:
 			return
 		title = resObj["_id"]
-		print("Title:\n", title)
-		self.initsavePath(title)
+		print("Title: ", title)
+		self.initSavePath(title)
 		seasons = resObj["seasons"]
 		for season in seasons:
 			seasonNumber = int(season["number"])
@@ -185,9 +185,9 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
 	parser.add_argument('videoURL', metavar='videoURL', type=str,
 						help='A video page URL, eg: https://animelon.com/video/579b1be6c13aa2a6b28f1364')
+	parser.add_argument('-d', "--sleepTime", metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
 	parser.add_argument('--savePath', metavar='savePath', help='Path to save', type=str, default="")
 	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
-	parser.add_argument('-d', metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
 	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
 	args = parser.parse_args()
 	url = args.videoURL
