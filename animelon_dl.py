@@ -222,7 +222,6 @@ if __name__ == "__main__":
 	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
 	args = parser.parse_args()
 	urls = args.videoURLs
-	print(urls)
 	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime)
 	downloader.downloadFromURLList(urls)
 	exit(0)
