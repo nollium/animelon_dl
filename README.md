@@ -1,4 +1,5 @@
 
+
 # animelon_download
 Command line downloader for https://animelon.com/
 
@@ -30,3 +31,7 @@ Command line downloader for https://animelon.com/
       --maxTries maxTries   Maximum number of retries in case of failed requests
                             (defaults to 5)
 
+## TODO:
+This script does not currently supports fetching subtitles from animelon, this is because animelon serves it's subtitles in encrypted Base64 via an API and decrypts it using obfuscated Javascript.
+
+Feel free to contribute if you find a way.
