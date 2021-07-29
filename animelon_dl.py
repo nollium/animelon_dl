@@ -59,25 +59,27 @@ class AnimelonScraper():
 				f.write(chunk)
 				if bar is not None:
 					bar.update(i+1)
-				# Add a little sleep so you can see the bar progress
+		# (did not)Add a little sleep so you can see the bar progress
 	
 	def downloadFromResObj(self, resObj, fileName=None):
 		if fileName is None:
 			fileName = resObj["title"] + ".mp4"
 		video = (resObj["video"])
 		videoUrls = video["videoURLsData"]
+		#list of lists of lists of urls, yeah
+		#only one of them is valid, so we try all of them
 		for mobileUrlList in videoUrls.values():
 			for mobileUrlList in videoUrls.values():
 				videoUrlsSublist = mobileUrlList["videoURLs"]
-				for ourUrl in videoUrlsSublist.values():
-					obj = ourUrl
+				for videoUrl in videoUrlsSublist.values():
 					time.sleep(0.2)
-					videoStream = self.session.get(obj, stream=True)
+					videoStream = self.session.get(videoUrl, stream=True)
 					if videoStream.status_code == 200:
-						self.downloadVideo(obj, fileName=fileName, stream=videoStream)
+						self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
 						print ("Finished downloading ", fileName)
-						return
+						return True
 		print ("No valid download link found for " + fileName)
+		return False
 
 #unused and unfinished
 	def recursiveDownload(self, url, filename=None):
@@ -104,8 +106,8 @@ class AnimelonScraper():
 		response = get(apiUrl, headers=self.headers)
 		print (apiUrl, response)
 		jsonsed = json.loads(response.content)
-		self.downloadFromResObj(jsonsed["resObj"], fileName=fileName)
-		return
+		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
+		
 
 #https://r6---sn-25ge7ns7.googlevideo.com/videoplayback?expire=1627492603&ei=23QBYf7FKYKjyAWNw6OACw&ip=193.218.118.155&id=4bcf80f442cabe8d&itag=22&source=picasa&begin=0&requiressl=yes&sc=yes&susc=ph&app=fife&ic=388&eaua=_SMKmC0CUL0&mime=video/mp4&vprv=1&prv=1&cnr=14&dur=1377.547&lmt=1572175526293378&sparams=expire,ei,ip,id,itag,source,requiressl,susc,app,ic,eaua,mime,vprv,prv,cnr,dur,lmt&sig=AOq0QJ8wRAIgfkk1eyr2Y39IgInAspeS7gkN9GuCc-Xo-VTqRIKLwa0CID2QKrF9NbMH_hyh2ke8mQAF0r5S2-Yp_jUnpIpbJ11H&redirect_counter=1&rm=sn-c0qlr7e&req_id=b1678ca4872d36e2&cms_redirect=yes&ipbypass=yes&mh=ag&mip=90.127.228.203&mm=32&mn=sn-25ge7ns7&ms=su&mt=1627483384&mv=u&mvi=6&pl=19&lsparams=ipbypass,mh,mip,mm,mn,ms,mv,mvi,pl,sc&lsig=AG3C_xAwRAIgasikFrXN8pC418MuSfWWNIWDiy3o8RsflISe0oP-32kCIC3YHiVRpd1o-AM-mkgc7wivEwq0g1KjBxXFw7BJgkMX
 
