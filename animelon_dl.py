@@ -6,6 +6,8 @@ import json
 import numpy as np
 from multiprocessing import Process
 import progressbar
+import argparse
+import sys
 
 def pid_exists(pid):
 	try:
@@ -15,7 +17,7 @@ def pid_exists(pid):
 	else:
 		return True
 
-class AnimelonScraper():
+class AnimelonDownloader():
 	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir=""):
 		self.baseUrl = baseUrl
 		self.session = session
@@ -96,7 +98,7 @@ class AnimelonScraper():
 					return
 					
 		
-	def downloadPage(self, url=None, id=None, fileName=None):	
+	def downloadFromVideoPage(self, url=None, id=None, fileName=None):	
 		assert(url is not None or id is not None)
 		if url is None:
 			url = self.baseUrl + "video/" + id
@@ -111,10 +113,9 @@ class AnimelonScraper():
 
 #https://r6---sn-25ge7ns7.googlevideo.com/videoplayback?expire=1627492603&ei=23QBYf7FKYKjyAWNw6OACw&ip=193.218.118.155&id=4bcf80f442cabe8d&itag=22&source=picasa&begin=0&requiressl=yes&sc=yes&susc=ph&app=fife&ic=388&eaua=_SMKmC0CUL0&mime=video/mp4&vprv=1&prv=1&cnr=14&dur=1377.547&lmt=1572175526293378&sparams=expire,ei,ip,id,itag,source,requiressl,susc,app,ic,eaua,mime,vprv,prv,cnr,dur,lmt&sig=AOq0QJ8wRAIgfkk1eyr2Y39IgInAspeS7gkN9GuCc-Xo-VTqRIKLwa0CID2QKrF9NbMH_hyh2ke8mQAF0r5S2-Yp_jUnpIpbJ11H&redirect_counter=1&rm=sn-c0qlr7e&req_id=b1678ca4872d36e2&cms_redirect=yes&ipbypass=yes&mh=ag&mip=90.127.228.203&mm=32&mn=sn-25ge7ns7&ms=su&mt=1627483384&mv=u&mvi=6&pl=19&lsparams=ipbypass,mh,mip,mm,mn,ms,mv,mvi,pl,sc&lsig=AG3C_xAwRAIgasikFrXN8pC418MuSfWWNIWDiy3o8RsflISe0oP-32kCIC3YHiVRpd1o-AM-mkgc7wivEwq0g1KjBxXFw7BJgkMX
 
-	def getAnimeList(self, url):
-		url = url.rsplit('/', 1)[-1]
-		url = self.baseUrl + "api/series/" + url
-		print (url)
+	def getEpisodeList(self, seriesUrl):
+		seriesName = seriesUrl.rsplit('/', 1)[-1]
+		url = self.baseUrl + "api/series/" + seriesName
 		statusCode = 403
 		tries = 0
 		while statusCode != 200 and tries < self.maxTries:
@@ -125,8 +126,13 @@ class AnimelonScraper():
 		if (statusCode != 200):
 			print ("Error getting anime info")
 			return None
-		jsoned = json.loads(response.text)
-		resObj = jsoned["resObj"]
+		try:
+			jsoned = json.loads(response.text)
+			resObj = jsoned["resObj"]
+			assert (resObj is not None)
+		except Exception as e:
+			print ("Error: Could not parse anime info :\n", e, url , "\n", response, response.content, file=sys.stderr)
+			return None
 		return resObj
 
 	def initSaveDir(self, name):
@@ -135,7 +141,7 @@ class AnimelonScraper():
 		os.makedirs(self.saveDir, exist_ok=True)
 
 	def launchBackgroundDownload(self, url, episode, fileName):
-		p = Process(target=self.downloadPage, args=(url, episode, fileName))
+		p = Process(target=self.downloadFromVideoPage, args=(url, episode, fileName))
 		self.processList.append(p)
 		p.start()
 		time.sleep(self.sleepTime)
@@ -152,14 +158,16 @@ class AnimelonScraper():
 				try:
 					self.launchBackgroundDownload(url, episode, fileName)
 				except Exception as e:
-					print("Error: Failed to download " + url)
+					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
 
 #episodesToDownload = {season_i : [episode_j, episode_j+1]}
-	def downloadAnime(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None):
+	def downloadSeries(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None):
 		#https://animelon.com/api/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
 		#url = everything after last /
-		resObj = self.getAnimeList(url)
+		resObj = self.getEpisodeList(url)
+		if resObj is None:
+			return
 		title = resObj["_id"]
 		print("Title:\n", title)
 		self.initSaveDir(title)
@@ -174,8 +182,17 @@ class AnimelonScraper():
 		self.waitForFreeProcess(processMax=1)
 
 if __name__ == "__main__":
-	scraper = AnimelonScraper(processMax=4)
-	#url = "https://animelon.com/series/Death%20Note"
-	url = "https://animelon.com/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls' Last%20Tour)"
-	#scraper.downloadPage("https://animelon.com/video/5762abf7fc68e08dcd850d84")
-	scraper.downloadAnime(url)
+	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
+	parser.add_argument('videoURL', metavar='videoURL', type=str,
+						help='A video page URL, eg: https://animelon.com/video/579b1be6c13aa2a6b28f1364')
+	args = parser.parse_args()
+	url = args.videoURL
+	type = url.split('/')[3]
+	downloader = AnimelonDownloader()
+	if type == 'series':
+		downloader.downloadSeries(url)
+	elif type == 'video':
+		downloader.downloadFromVideoPage(url)
+	else:
+		print('Error: Unknown URL type "' + type + '"', file=sys.stderr)
+
