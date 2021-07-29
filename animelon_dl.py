@@ -1,25 +1,18 @@
 from requests import get , post, Session
-from bs4 import BeautifulSoup
 import time
 import os
 import json
 import numpy as np
 from multiprocessing import Process
 import progressbar
+import argparse
+import sys
 
-def pid_exists(pid):
-	try:
-		os.kill(pid, 0)
-	except OSError:
-		return (False)
-	else:
-		return True
-
-class AnimelonScraper():
-	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir=""):
-		self.baseUrl = baseUrl
+class AnimelonDownloader():
+	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="./", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
+		self.baseURL = baseURL
 		self.session = session
-		self.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+		self.userAgent = userAgent
 		self.videoUserAgent="Mozilla/5=+(dot)+=0 (Linux; Android 9; CPH2015) AppleWebKit/537=+(dot)+=36 (KHTML, like Gecko) Chrome/91=+(dot)+=0=+(dot)+=4472=+(dot)+=164 Mobile Safari/537=+(dot)+=36"
 		self.headers = { "user-agent": self.userAgent }
 		self.apiVideoFormat = "https://animelon.com/api/languagevideo/findByVideo?videoId=%s&learnerLanguage=en&subs=1&cdnLink=1&viewCounter=1"
@@ -28,7 +21,13 @@ class AnimelonScraper():
 		self.processMax = processMax
 		self.sleepTime = sleepTime
 		self.maxTries = maxTries
-		self.saveDir = saveDir
+		self.savePath = savePath
+		self.initSavePath(savePath)
+
+	def __repr__(self):
+		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
+		% (self.baseURL, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
+		return rep
 
 	def waitForFreeProcess(self, processMax=None):
 		if processMax is None:
@@ -38,9 +37,19 @@ class AnimelonScraper():
 			self.processList = newList
 			time.sleep(5)
 
+	def launchBackgroundTask(self, function, args:tuple):
+		self.waitForFreeProcess()
+		p = Process(target=function, args=args)
+		self.processList.append(p)
+		p.start()
+
+	def __del__(self):
+		self.waitForFreeProcess(1)
+
 	def downloadVideo(self, url, fileName=None, stream=None):
 		if fileName is None:
 			fileName = url.split("/")[-1] + ".mp4"
+			fileName = os.path.join(self.savePath, fileName)
 		video = stream
 		if video is None:
 			video = self.session.get(url, stream=True)
@@ -53,14 +62,13 @@ class AnimelonScraper():
 		bar = None
 		if len(self.processList) == 1: 
 			bar = progressbar.ProgressBar(maxval=num_bars).start()
-		fileName = os.path.join(self.saveDir, fileName)
 		with open(fileName, 'wb') as f:
 			for i, chunk in enumerate(video.iter_content(chunk_size=n_chunk * block_size)):
 				f.write(chunk)
 				if bar is not None:
 					bar.update(i+1)
 		# (did not)Add a little sleep so you can see the bar progress
-	
+
 	def downloadFromResObj(self, resObj, fileName=None):
 		if fileName is None:
 			fileName = resObj["title"] + ".mp4"
@@ -68,17 +76,21 @@ class AnimelonScraper():
 		videoUrls = video["videoURLsData"]
 		#list of lists of lists of urls, yeah
 		#only one of them is valid, so we try all of them
-		for mobileUrlList in videoUrls.values():
+		for i in range(1, self.maxTries + 1):
 			for mobileUrlList in videoUrls.values():
-				videoUrlsSublist = mobileUrlList["videoURLs"]
-				for videoUrl in videoUrlsSublist.values():
-					time.sleep(0.2)
-					videoStream = self.session.get(videoUrl, stream=True)
-					if videoStream.status_code == 200:
-						self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
-						print ("Finished downloading ", fileName)
-						return True
-		print ("No valid download link found for " + fileName)
+				for mobileUrlList in videoUrls.values():
+					videoUrlsSublist = mobileUrlList["videoURLs"]
+					for videoUrl in videoUrlsSublist.values():
+						time.sleep(0.2)
+						videoStream = self.session.get(videoUrl, stream=True)
+						if videoStream.status_code == 200:
+							self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
+							print ("Finished downloading ", fileName)
+							return True
+			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
+			time.sleep(self.sleepTime * i)
+			
+		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
 		return False
 
 #unused and unfinished
@@ -94,88 +106,122 @@ class AnimelonScraper():
 				if "resObj" in data.keys():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
 					return
-					
-		
-	def downloadPage(self, url=None, id=None, fileName=None):	
+
+	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False):
 		assert(url is not None or id is not None)
+		if background:
+			self.launchBackgroundTask(self.downloadFromVideoPage, (url, id, fileName, False))
+			time.sleep(self.sleepTime)
+			return None
 		if url is None:
-			url = self.baseUrl + "video/" + id
+			url = self.baseURL + "video/" + id
 		if id is None:
 			id = url.split("/")[-1]
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
-		print (apiUrl, response)
 		jsonsed = json.loads(response.content)
 		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
-		
 
-#https://r6---sn-25ge7ns7.googlevideo.com/videoplayback?expire=1627492603&ei=23QBYf7FKYKjyAWNw6OACw&ip=193.218.118.155&id=4bcf80f442cabe8d&itag=22&source=picasa&begin=0&requiressl=yes&sc=yes&susc=ph&app=fife&ic=388&eaua=_SMKmC0CUL0&mime=video/mp4&vprv=1&prv=1&cnr=14&dur=1377.547&lmt=1572175526293378&sparams=expire,ei,ip,id,itag,source,requiressl,susc,app,ic,eaua,mime,vprv,prv,cnr,dur,lmt&sig=AOq0QJ8wRAIgfkk1eyr2Y39IgInAspeS7gkN9GuCc-Xo-VTqRIKLwa0CID2QKrF9NbMH_hyh2ke8mQAF0r5S2-Yp_jUnpIpbJ11H&redirect_counter=1&rm=sn-c0qlr7e&req_id=b1678ca4872d36e2&cms_redirect=yes&ipbypass=yes&mh=ag&mip=90.127.228.203&mm=32&mn=sn-25ge7ns7&ms=su&mt=1627483384&mv=u&mvi=6&pl=19&lsparams=ipbypass,mh,mip,mm,mn,ms,mv,mvi,pl,sc&lsig=AG3C_xAwRAIgasikFrXN8pC418MuSfWWNIWDiy3o8RsflISe0oP-32kCIC3YHiVRpd1o-AM-mkgc7wivEwq0g1KjBxXFw7BJgkMX
-
-	def getAnimeList(self, url):
-		url = url.rsplit('/', 1)[-1]
-		url = self.baseUrl + "api/series/" + url
-		print (url)
+	def getEpisodeList(self, seriesUrl):
+		seriesName = seriesUrl.rsplit('/', 1)[-1]
+		url = self.baseURL + "api/series/" + seriesName
 		statusCode = 403
 		tries = 0
 		while statusCode != 200 and tries < self.maxTries:
 			response = self.session.get(url)
 			statusCode = response.status_code
 			tries += 1
-			time.sleep(1)
+			time.sleep(0.5)
 		if (statusCode != 200):
 			print ("Error getting anime info")
 			return None
-		jsoned = json.loads(response.text)
-		resObj = jsoned["resObj"]
+		try:
+			jsoned = json.loads(response.text)
+			resObj = jsoned["resObj"]
+			if resObj is None and '\\' in seriesUrl:
+				seriesUrl = seriesUrl.replace('\\', '')
+				return (self.getEpisodeList(seriesUrl))
+			assert (resObj is not None)
+		except Exception as e:
+			print ("Error: Could not parse anime info :\n", e, url , "\n", response, response.content, file=sys.stderr)
+			return None
 		return resObj
 
-	def initSaveDir(self, name):
-		if self.saveDir == "":
-			self.saveDir = name
-		os.makedirs(self.saveDir, exist_ok=True)
+	def initSavePath(self, name):
+		if self.savePath == "./" or name == "":
+			self.savePath = name
+		if self.savePath == "":
+			self.savePath = "./"
+		os.makedirs(self.savePath, exist_ok=True)
 
-	def launchBackgroundDownload(self, url, episode, fileName):
-		p = Process(target=self.downloadPage, args=(url, episode, fileName))
-		self.processList.append(p)
-		p.start()
-		time.sleep(self.sleepTime)
-
-	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0):
+	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0, savePath:str="./"):
 		index = 0
 		for episode in episodes:
 			index += 1
 			if episodesToDownload is None or index in episodesToDownload[seasonNumber]:
 				self.waitForFreeProcess()
-				url = self.baseUrl + "video/" + episode
+				url = self.baseURL + "video/" + episode
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
+				fileName = os.path.join(savePath, fileName)
 				print(fileName, " : ", url)
 				try:
-					self.launchBackgroundDownload(url, episode, fileName)
+					self.downloadFromVideoPage(url, fileName=fileName, background=True)
 				except Exception as e:
-					print("Error: Failed to download " + url)
+					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
 
 #episodesToDownload = {season_i : [episode_j, episode_j+1]}
-	def downloadAnime(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None):
+	def downloadSeries(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
 		#https://animelon.com/api/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
 		#url = everything after last /
-		resObj = self.getAnimeList(url)
+		resObj = self.getEpisodeList(url)
+		if resObj is None:
+			return
 		title = resObj["_id"]
-		print("Title:\n", title)
-		self.initSaveDir(title)
+		print("Title: ", title)
+		seriesSavePath = os.path.join(self.savePath, title)
 		seasons = resObj["seasons"]
 		for season in seasons:
 			seasonNumber = int(season["number"])
+			seasonSavePath = os.path.join(seriesSavePath, "S%.2d" % seasonNumber)
+			os.makedirs(seasonSavePath, exist_ok=True)
 			if seasonsToDownload is None or seasonNumber in seasonsToDownload:
 				print("Season %d:" % (seasonNumber))
 				episodes = season["episodes"]
-				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber)
-				
-		self.waitForFreeProcess(processMax=1)
+				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber, savePath=seasonSavePath)
+		if background is False:
+			self.waitForFreeProcess(1)
+
+	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, parallell=False):
+		try:
+			type = url.split('/')[3]
+		except IndexError:
+			print('Error: Bad URL : "%s"' % url)
+			return
+		if type == 'series':
+			downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
+		elif type == 'video':
+			downloader.downloadFromVideoPage(url, background=parallell)
+		else:
+			print('Error: Unknown URL type "%"' % type, file=sys.stderr)
+
+
+	def downloadFromURLList(self, URLs:list, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
+		for url in URLs:
+			self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True)
+		if background is False:
+			self.waitForFreeProcess(1)
 
 if __name__ == "__main__":
-	scraper = AnimelonScraper(processMax=4)
-	#url = "https://animelon.com/series/Death%20Note"
-	url = "https://animelon.com/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls' Last%20Tour)"
-	#scraper.downloadPage("https://animelon.com/video/5762abf7fc68e08dcd850d84")
-	scraper.downloadAnime(url)
+	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
+	parser.add_argument('videoURLs', metavar='videoURLs', type=str, nargs='+',
+						help='A video page URL, eg: https://animelon.com/video/579b1be6c13aa2a6b28f1364')
+	parser.add_argument('-d', "--sleepTime", metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
+	parser.add_argument('--savePath', metavar='savePath', help='Path to save', type=str, default="")
+	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
+	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
+	args = parser.parse_args()
+	urls = args.videoURLs
+	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime)
+	downloader.downloadFromURLList(urls)
+	exit(0)
