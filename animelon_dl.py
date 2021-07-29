@@ -62,7 +62,7 @@ class AnimelonDownloader():
 				if bar is not None:
 					bar.update(i+1)
 		# (did not)Add a little sleep so you can see the bar progress
-	
+
 	def downloadFromResObj(self, resObj, fileName=None):
 		if fileName is None:
 			fileName = resObj["title"] + ".mp4"
@@ -96,7 +96,6 @@ class AnimelonDownloader():
 				if "resObj" in data.keys():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
 					return
-					
 		
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None):	
 		assert(url is not None or id is not None)
@@ -110,9 +109,6 @@ class AnimelonDownloader():
 		jsonsed = json.loads(response.content)
 		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
 		
-
-#https://r6---sn-25ge7ns7.googlevideo.com/videoplayback?expire=1627492603&ei=23QBYf7FKYKjyAWNw6OACw&ip=193.218.118.155&id=4bcf80f442cabe8d&itag=22&source=picasa&begin=0&requiressl=yes&sc=yes&susc=ph&app=fife&ic=388&eaua=_SMKmC0CUL0&mime=video/mp4&vprv=1&prv=1&cnr=14&dur=1377.547&lmt=1572175526293378&sparams=expire,ei,ip,id,itag,source,requiressl,susc,app,ic,eaua,mime,vprv,prv,cnr,dur,lmt&sig=AOq0QJ8wRAIgfkk1eyr2Y39IgInAspeS7gkN9GuCc-Xo-VTqRIKLwa0CID2QKrF9NbMH_hyh2ke8mQAF0r5S2-Yp_jUnpIpbJ11H&redirect_counter=1&rm=sn-c0qlr7e&req_id=b1678ca4872d36e2&cms_redirect=yes&ipbypass=yes&mh=ag&mip=90.127.228.203&mm=32&mn=sn-25ge7ns7&ms=su&mt=1627483384&mv=u&mvi=6&pl=19&lsparams=ipbypass,mh,mip,mm,mn,ms,mv,mvi,pl,sc&lsig=AG3C_xAwRAIgasikFrXN8pC418MuSfWWNIWDiy3o8RsflISe0oP-32kCIC3YHiVRpd1o-AM-mkgc7wivEwq0g1KjBxXFw7BJgkMX
-
 	def getEpisodeList(self, seriesUrl):
 		seriesName = seriesUrl.rsplit('/', 1)[-1]
 		url = self.baseUrl + "api/series/" + seriesName
@@ -178,7 +174,6 @@ class AnimelonDownloader():
 				print("Season %d:" % (seasonNumber))
 				episodes = season["episodes"]
 				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber)
-				
 		self.waitForFreeProcess(processMax=1)
 
 if __name__ == "__main__":
