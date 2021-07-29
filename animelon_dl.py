@@ -18,10 +18,10 @@ def pid_exists(pid):
 		return True
 
 class AnimelonDownloader():
-	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, saveDir=""):
+	def __init__(self, baseUrl="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
 		self.baseUrl = baseUrl
 		self.session = session
-		self.userAgent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"
+		self.userAgent = userAgent
 		self.videoUserAgent="Mozilla/5=+(dot)+=0 (Linux; Android 9; CPH2015) AppleWebKit/537=+(dot)+=36 (KHTML, like Gecko) Chrome/91=+(dot)+=0=+(dot)+=4472=+(dot)+=164 Mobile Safari/537=+(dot)+=36"
 		self.headers = { "user-agent": self.userAgent }
 		self.apiVideoFormat = "https://animelon.com/api/languagevideo/findByVideo?videoId=%s&learnerLanguage=en&subs=1&cdnLink=1&viewCounter=1"
@@ -30,7 +30,12 @@ class AnimelonDownloader():
 		self.processMax = processMax
 		self.sleepTime = sleepTime
 		self.maxTries = maxTries
-		self.saveDir = saveDir
+		self.savePath = savePath
+
+	def __repr__(self):
+		rep = 'AnimelonDownloader(baseUrl="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
+		% (self.baseUrl, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
+		return rep
 
 	def waitForFreeProcess(self, processMax=None):
 		if processMax is None:
@@ -55,7 +60,7 @@ class AnimelonDownloader():
 		bar = None
 		if len(self.processList) == 1: 
 			bar = progressbar.ProgressBar(maxval=num_bars).start()
-		fileName = os.path.join(self.saveDir, fileName)
+		fileName = os.path.join(self.savePath, fileName)
 		with open(fileName, 'wb') as f:
 			for i, chunk in enumerate(video.iter_content(chunk_size=n_chunk * block_size)):
 				f.write(chunk)
@@ -118,7 +123,7 @@ class AnimelonDownloader():
 			response = self.session.get(url)
 			statusCode = response.status_code
 			tries += 1
-			time.sleep(1)
+			time.sleep(0.5)
 		if (statusCode != 200):
 			print ("Error getting anime info")
 			return None
@@ -131,10 +136,10 @@ class AnimelonDownloader():
 			return None
 		return resObj
 
-	def initSaveDir(self, name):
-		if self.saveDir == "":
-			self.saveDir = name
-		os.makedirs(self.saveDir, exist_ok=True)
+	def initsavePath(self, name):
+		if self.savePath == "":
+			self.savePath = name
+		os.makedirs(self.savePath, exist_ok=True)
 
 	def launchBackgroundDownload(self, url, episode, fileName):
 		p = Process(target=self.downloadFromVideoPage, args=(url, episode, fileName))
@@ -166,7 +171,7 @@ class AnimelonDownloader():
 			return
 		title = resObj["_id"]
 		print("Title:\n", title)
-		self.initSaveDir(title)
+		self.initsavePath(title)
 		seasons = resObj["seasons"]
 		for season in seasons:
 			seasonNumber = int(season["number"])
@@ -180,10 +185,14 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
 	parser.add_argument('videoURL', metavar='videoURL', type=str,
 						help='A video page URL, eg: https://animelon.com/video/579b1be6c13aa2a6b28f1364')
+	parser.add_argument('--savePath', metavar='savePath', help='Path to save', type=str, default="")
+	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
+	parser.add_argument('-d', metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
+	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
 	args = parser.parse_args()
 	url = args.videoURL
 	type = url.split('/')[3]
-	downloader = AnimelonDownloader()
+	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.d)
 	if type == 'series':
 		downloader.downloadSeries(url)
 	elif type == 'video':
