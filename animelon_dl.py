@@ -75,17 +75,21 @@ class AnimelonDownloader():
 		videoUrls = video["videoURLsData"]
 		#list of lists of lists of urls, yeah
 		#only one of them is valid, so we try all of them
-		for mobileUrlList in videoUrls.values():
+		for i in range(1, self.maxTries + 1):
 			for mobileUrlList in videoUrls.values():
-				videoUrlsSublist = mobileUrlList["videoURLs"]
-				for videoUrl in videoUrlsSublist.values():
-					time.sleep(0.2)
-					videoStream = self.session.get(videoUrl, stream=True)
-					if videoStream.status_code == 200:
-						self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
-						print ("Finished downloading ", fileName)
-						return True
-		print ("No valid download link found for " + fileName)
+				for mobileUrlList in videoUrls.values():
+					videoUrlsSublist = mobileUrlList["videoURLs"]
+					for videoUrl in videoUrlsSublist.values():
+						time.sleep(0.2)
+						videoStream = self.session.get(videoUrl, stream=True)
+						if videoStream.status_code == 200:
+							self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
+							print ("Finished downloading ", fileName)
+							return True
+			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
+			time.sleep(self.sleepTime * i)
+			
+		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
 		return False
 
 #unused and unfinished
@@ -114,7 +118,6 @@ class AnimelonDownloader():
 			id = url.split("/")[-1]
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
-		print (apiUrl, response)
 		jsonsed = json.loads(response.content)
 		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
 
@@ -134,6 +137,9 @@ class AnimelonDownloader():
 		try:
 			jsoned = json.loads(response.text)
 			resObj = jsoned["resObj"]
+			if resObj is None and '\\' in seriesUrl:
+				seriesUrl = seriesUrl.remove('\\')
+				return (self.getEpisodeList(seriesUrl))
 			assert (resObj is not None)
 		except Exception as e:
 			print ("Error: Could not parse anime info :\n", e, url , "\n", response, response.content, file=sys.stderr)
@@ -145,7 +151,6 @@ class AnimelonDownloader():
 			self.savePath = name
 		os.makedirs(self.savePath, exist_ok=True)
 
-
 	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0):
 		index = 0
 		for episode in episodes:
@@ -156,7 +161,7 @@ class AnimelonDownloader():
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
 				print(fileName, " : ", url)
 				try:
-					self.downloadFromVideoPage(url, episode=episode, fileName=fileName, background=True)
+					self.downloadFromVideoPage(url, fileName=fileName, background=True)
 				except Exception as e:
 					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
