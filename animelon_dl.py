@@ -37,6 +37,12 @@ class AnimelonDownloader():
 			self.processList = newList
 			time.sleep(5)
 
+	def launchBackgroundTask(self, function, args:tuple):
+		self.waitForFreeProcess()
+		p = Process(target=function, args=args)
+		self.processList.append(p)
+		p.start()
+
 	def __del__(self):
 		self.waitForFreeProcess(1)
 
@@ -96,9 +102,13 @@ class AnimelonDownloader():
 				if "resObj" in data.keys():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
 					return
-		
+
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False):
 		assert(url is not None or id is not None)
+		if background:
+			self.launchBackgroundTask(self.downloadFromVideoPage, (url, id, fileName, False))
+			time.sleep(self.sleepTime)
+			return None
 		if url is None:
 			url = self.baseURL + "video/" + id
 		if id is None:
@@ -108,7 +118,7 @@ class AnimelonDownloader():
 		print (apiUrl, response)
 		jsonsed = json.loads(response.content)
 		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
-		
+
 	def getEpisodeList(self, seriesUrl):
 		seriesName = seriesUrl.rsplit('/', 1)[-1]
 		url = self.baseURL + "api/series/" + seriesName
@@ -136,17 +146,6 @@ class AnimelonDownloader():
 			self.savePath = name
 		os.makedirs(self.savePath, exist_ok=True)
 
-	def launchBackgroundTask(self, args:tuple):
-
-	def launchBackgroundDownload(self, videoPageURL=None, episode=None, fileName=None):
-		p = Process(target=self.downloadFromVideoPage, args=(videoPageURL, episode, fileName))
-		self.processList.append(p)
-		p.start()
-		time.sleep(self.sleepTime)
-
-	def waitAndLaunchBackgroundDownload(self, videoPageURL=None, episode=None, fileName=None):
-		self.waitForFreeProcess()
-		self.launchBackgroundDownload(videoPageURL, episode=episode, fileName=fileName)
 
 	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0):
 		index = 0
@@ -158,7 +157,7 @@ class AnimelonDownloader():
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
 				print(fileName, " : ", url)
 				try:
-					self.launchBackgroundDownload(url, episode=episode, fileName=fileName)
+					self.downloadFromVideoPage(url, episode=episode, fileName=fileName, background=True)
 				except Exception as e:
 					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
@@ -192,10 +191,7 @@ class AnimelonDownloader():
 		if type == 'series':
 			downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
 		elif type == 'video':
-			if background:
-				downloader.waitAndLaunchBackgroundDownload(url)
-			else:
-				downloader.downloadFromVideoPage(url)
+			downloader.downloadFromVideoPage(url, background=background)
 		else:
 			print('Error: Unknown URL type "%"' % type, file=sys.stderr)
 
