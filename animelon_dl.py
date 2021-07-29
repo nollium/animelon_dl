@@ -1,5 +1,4 @@
 from requests import get , post, Session
-from bs4 import BeautifulSoup
 import time
 import os
 import json
