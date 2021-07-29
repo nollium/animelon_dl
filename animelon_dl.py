@@ -9,7 +9,7 @@ import argparse
 import sys
 
 class AnimelonDownloader():
-	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
+	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="./", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
 		self.baseURL = baseURL
 		self.session = session
 		self.userAgent = userAgent
@@ -22,6 +22,7 @@ class AnimelonDownloader():
 		self.sleepTime = sleepTime
 		self.maxTries = maxTries
 		self.savePath = savePath
+		self.initSavePath(savePath)
 
 	def __repr__(self):
 		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
@@ -48,6 +49,7 @@ class AnimelonDownloader():
 	def downloadVideo(self, url, fileName=None, stream=None):
 		if fileName is None:
 			fileName = url.split("/")[-1] + ".mp4"
+			fileName = os.path.join(self.savePath, fileName)
 		video = stream
 		if video is None:
 			video = self.session.get(url, stream=True)
@@ -60,7 +62,6 @@ class AnimelonDownloader():
 		bar = None
 		if len(self.processList) == 1: 
 			bar = progressbar.ProgressBar(maxval=num_bars).start()
-		fileName = os.path.join(self.savePath, fileName)
 		with open(fileName, 'wb') as f:
 			for i, chunk in enumerate(video.iter_content(chunk_size=n_chunk * block_size)):
 				f.write(chunk)
@@ -138,7 +139,7 @@ class AnimelonDownloader():
 			jsoned = json.loads(response.text)
 			resObj = jsoned["resObj"]
 			if resObj is None and '\\' in seriesUrl:
-				seriesUrl = seriesUrl.remove('\\')
+				seriesUrl = seriesUrl.replace('\\', '')
 				return (self.getEpisodeList(seriesUrl))
 			assert (resObj is not None)
 		except Exception as e:
@@ -147,11 +148,13 @@ class AnimelonDownloader():
 		return resObj
 
 	def initSavePath(self, name):
-		if self.savePath == "":
+		if self.savePath == "./" or name == "":
 			self.savePath = name
+		if self.savePath == "":
+			self.savePath = "./"
 		os.makedirs(self.savePath, exist_ok=True)
 
-	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0):
+	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0, savePath:str="./"):
 		index = 0
 		for episode in episodes:
 			index += 1
@@ -159,6 +162,7 @@ class AnimelonDownloader():
 				self.waitForFreeProcess()
 				url = self.baseURL + "video/" + episode
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
+				fileName = os.path.join(savePath, fileName)
 				print(fileName, " : ", url)
 				try:
 					self.downloadFromVideoPage(url, fileName=fileName, background=True)
@@ -175,18 +179,20 @@ class AnimelonDownloader():
 			return
 		title = resObj["_id"]
 		print("Title: ", title)
-		self.initSavePath(title)
+		seriesSavePath = os.path.join(self.savePath, title)
 		seasons = resObj["seasons"]
 		for season in seasons:
 			seasonNumber = int(season["number"])
+			seasonSavePath = os.path.join(seriesSavePath, "S%.2d" % seasonNumber)
+			os.makedirs(seasonSavePath, exist_ok=True)
 			if seasonsToDownload is None or seasonNumber in seasonsToDownload:
 				print("Season %d:" % (seasonNumber))
 				episodes = season["episodes"]
-				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber)
+				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber, savePath=seasonSavePath)
 		if background is False:
 			self.waitForFreeProcess(1)
 
-	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
+	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, parallell=False):
 		try:
 			type = url.split('/')[3]
 		except IndexError:
@@ -195,15 +201,15 @@ class AnimelonDownloader():
 		if type == 'series':
 			downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
 		elif type == 'video':
-			downloader.downloadFromVideoPage(url, background=background)
+			downloader.downloadFromVideoPage(url, background=parallell)
 		else:
 			print('Error: Unknown URL type "%"' % type, file=sys.stderr)
 
 
 	def downloadFromURLList(self, URLs:list, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
 		for url in URLs:
-			self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, background=True)
-		if background:
+			self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True)
+		if background is False:
 			self.waitForFreeProcess(1)
 
 if __name__ == "__main__":
