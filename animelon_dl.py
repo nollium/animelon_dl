@@ -72,6 +72,9 @@ class AnimelonDownloader():
 		# (did not)Add a little sleep so you can see the bar progress
 
 	def downloadFromResObj(self, resObj, fileName=None):
+		for i in resObj["subtitles"]:
+			print (i.keys())
+		exit(0)
 		if fileName is None:
 			fileName = resObj["title"] + ".mp4"
 		video = (resObj["video"])

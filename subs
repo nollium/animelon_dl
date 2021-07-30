@@ -1,0 +1,190 @@
+[Script Info]
+Title: HorribleSubs
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 848
+PlayResY: 480
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Open Sans Semibold,36,&H00FFFFFF,&H000000FF,&H00020713,&H00000000,-1,0,0,0,100,100,0,0,1,1.7,0,2,0,0,28,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+
+Dialogue: 0,0:02:41.91,0:02:42.79,Default,,0,0,0,,It's so dark.
+Dialogue: 0,0:02:43.62,0:02:44.50,Default,,0,0,0,,It's so dark.
+Dialogue: 0,0:02:45.20,0:02:46.08,Default,,0,0,0,,It's so dark.
+Dialogue: 0,0:02:48.75,0:02:52.12,Default,,0,0,0,,Iiit's soooo daaaark.
+Dialogue: 0,0:02:52.87,0:02:54.08,Default,,0,0,0,,Shut it.
+Dialogue: 0,0:02:54.87,0:02:56.00,Default,,0,0,0,,Sorry.
+Dialogue: 0,0:02:57.37,0:02:58.45,Default,,0,0,0,,It's okay.
+Dialogue: 0,0:03:01.33,0:03:03.75,Default,,0,0,0,,Then, can I turn on the lantern?
+Dialogue: 0,0:03:03.87,0:03:04.87,Default,,0,0,0,,No.
+Dialogue: 0,0:03:05.50,0:03:06.83,Default,,0,0,0,,Awww.
+Dialogue: 0,0:03:07.33,0:03:08.87,Default,,0,0,0,,Save it.
+Dialogue: 0,0:03:08.87,0:03:12.37,Default,,0,0,0,,We don't know where we'll find\Nthe next refueling station.
+Dialogue: 0,0:03:15.87,0:03:20.79,Default,,0,0,0,,Well, we've been in the dark for a while,\Nso my eyes might've gotten used to it.
+Dialogue: 0,0:03:21.58,0:03:24.58,Default,,0,0,0,,We haven't seen the light of day in a while now.
+Dialogue: 0,0:03:25.87,0:03:27.70,Default,,0,0,0,,Don't even know how many days it's been.
+Dialogue: 0,0:03:27.70,0:03:31.95,Default,,0,0,0,,But seriously, where are we right now?
+Dialogue: 0,0:03:33.95,0:03:36.41,Default,,0,0,0,,How'd we get into this place?
+Dialogue: 0,0:03:36.41,0:03:41.62,Default,,0,0,0,,C'mon, Yuu, who do you think it was\Nwho said they wanted to go into the hole?
+Dialogue: 0,0:03:43.54,0:03:44.70,Default,,0,0,0,,I think it was you, Chi?
+Dialogue: 0,0:03:44.70,0:03:45.87,Default,,0,0,0,,It was you.
+Dialogue: 0,0:03:47.83,0:03:51.66,Default,,0,0,0,,Come on, that's an old saying, isn't it?
+Dialogue: 0,0:03:51.66,0:03:55.41,Default,,0,0,0,,Doesn't it go, "I wish I could just climb into a hole"?
+Dialogue: 0,0:03:55.66,0:03:58.83,Default,,0,0,0,,Does it mean it that literally?
+Dialogue: 0,0:04:04.54,0:04:06.95,Default,,0,0,0,,In either case, we've gotta find a way out.
+Dialogue: 0,0:04:07.16,0:04:10.16,Default,,0,0,0,,We don't have that much food left, huh?
+Dialogue: 0,0:04:10.37,0:04:15.00,Default,,0,0,0,,Well, even if we get outta here,\Nwe don't know if we'll find food.
+Dialogue: 0,0:04:16.70,0:04:19.70,Default,,0,0,0,,What's gonna happen to us, huh?
+Dialogue: 0,0:04:23.50,0:04:26.08,Default,,0,0,0,,When will we get to the top of...
+Dialogue: 0,0:04:28.25,0:04:29.25,Default,,0,0,0,,Hey.
+Dialogue: 0,0:04:41.66,0:04:43.37,Default,,0,0,0,,Guess I'll sleep, too.
+Dialogue: 0,0:05:21.79,0:05:24.83,Default,,0,0,0,,What's the soup like?
+Dialogue: 0,0:05:24.83,0:05:28.58,Default,,0,0,0,,It's so smooth...
+Dialogue: 0,0:05:28.58,0:05:31.87,Default,,0,0,0,,No, it's so thick...
+Dialogue: 0,0:05:43.29,0:05:45.29,Default,,0,0,0,,So warm.
+Dialogue: 0,0:05:48.91,0:05:50.91,Default,,0,0,0,,I'm hungry.
+Dialogue: 0,0:06:48.87,0:06:50.37,Default,,0,0,0,,I'm cold...
+Dialogue: 0,0:07:31.95,0:07:33.70,Default,,0,0,0,,There's a breeze!
+Dialogue: 0,0:07:39.58,0:07:41.50,Default,,0,0,0,,Hey, wake up!
+Dialogue: 0,0:07:41.50,0:07:43.91,Default,,0,0,0,,C'mon! Yuu!
+Dialogue: 0,0:07:53.70,0:07:57.08,Default,,0,0,0,,Yeah. If we go the way the wind's blowing...
+Dialogue: 0,0:07:57.08,0:07:59.66,Default,,0,0,0,,...we'll find a way out?
+Dialogue: 0,0:07:59.66,0:08:01.16,Default,,0,0,0,,Yeah.
+Dialogue: 0,0:08:05.00,0:08:06.00,Default,,0,0,0,,There.
+Dialogue: 0,0:08:17.20,0:08:18.20,Default,,0,0,0,,Well?
+Dialogue: 0,0:08:21.41,0:08:22.41,Default,,0,0,0,,That way.
+Dialogue: 0,0:08:22.83,0:08:23.83,Default,,0,0,0,,Okay.
+Dialogue: 0,0:08:32.87,0:08:34.50,Default,,0,0,0,,Now it's that way.
+Dialogue: 0,0:08:34.50,0:08:35.50,Default,,0,0,0,,Got it.
+Dialogue: 0,0:08:46.79,0:08:48.20,Default,,0,0,0,,Light...
+Dialogue: 0,0:09:33.41,0:09:34.41,Default,,0,0,0,,Wow!
+Dialogue: 0,0:09:34.83,0:09:36.83,Default,,0,0,0,,It's so bright, Chi!
+Dialogue: 0,0:09:44.70,0:09:46.54,Default,,0,0,0,,It was nighttime...
+Dialogue: 0,0:10:00.54,0:10:05.08,Default,,0,0,0,,Hey, since we finally made it outside,\Nlet's have some soup, c'mon!
+Dialogue: 0,0:10:05.95,0:10:08.83,Default,,0,0,0,,Fine, just to celebrate getting out of there.
+Dialogue: 0,0:10:08.83,0:10:10.54,Default,,0,0,0,,Alright, food!
+Dialogue: 0,0:10:18.41,0:10:19.75,Default,,0,0,0,,Gotta be good now, right?
+Dialogue: 0,0:10:20.41,0:10:21.58,Default,,0,0,0,,Yeah.
+Dialogue: 0,0:10:31.37,0:10:32.37,Default,,0,0,0,,Here.
+Dialogue: 0,0:10:32.37,0:10:34.37,Default,,0,0,0,,It's our last can.
+Dialogue: 0,0:10:34.83,0:10:35.83,Default,,0,0,0,,Right!
+Dialogue: 0,0:10:35.83,0:10:36.83,Default,,0,0,0,,Hot!
+Dialogue: 0,0:10:44.33,0:10:46.29,Default,,0,0,0,,So good!
+Dialogue: 0,0:10:51.33,0:10:55.58,Default,,0,0,0,,I never knew nighttime was this bright.
+Dialogue: 0,0:10:56.12,0:10:59.12,Default,,0,0,0,,That's because we were in that\Ndark cavern that whole time.
+Dialogue: 0,0:10:59.12,0:11:01.29,Default,,0,0,0,,It made us sensitive to light.
+Dialogue: 0,0:11:01.75,0:11:05.75,Default,,0,0,0,,So what's gonna happen to us when the sun rises?
+Dialogue: 0,0:11:06.75,0:11:08.08,Default,,0,0,0,,We'll burn to death.
+Dialogue: 0,0:11:11.04,0:11:12.25,Default,,0,0,0,,Shut up!
+Dialogue: 0,0:12:15.29,0:12:16.50,Default,,0,0,0,,Hit.
+Dialogue: 0,0:12:18.79,0:12:19.79,Default,,0,0,0,,Hit.
+Dialogue: 0,0:12:24.41,0:12:25.50,Default,,0,0,0,,Miss.
+Dialogue: 0,0:12:29.20,0:12:30.37,Default,,0,0,0,,Huh?
+Dialogue: 0,0:12:32.95,0:12:34.45,Default,,0,0,0,,Alright, last one.
+Dialogue: 0,0:12:34.70,0:12:36.91,Default,,0,0,0,,You can keep on going if you want.
+Dialogue: 0,0:12:43.83,0:12:44.83,Default,,0,0,0,,Hit.
+Dialogue: 0,0:12:50.83,0:12:51.66,Default,,0,0,0,,Hit.
+Dialogue: 0,0:12:58.00,0:12:59.00,Default,,0,0,0,,Hit.
+Dialogue: 0,0:13:00.20,0:13:01.95,Default,,0,0,0,,You wanna shoot, Chi?
+Dialogue: 0,0:13:01.95,0:13:04.00,Default,,0,0,0,,No, I'm good.
+Dialogue: 0,0:13:04.66,0:13:06.37,Default,,0,0,0,,You're a terrible shot, anyway.
+Dialogue: 0,0:13:06.95,0:13:08.33,Default,,0,0,0,,Oh, shut up.
+Dialogue: 0,0:13:08.58,0:13:10.87,Default,,0,0,0,,You don't carry a weapon?
+Dialogue: 0,0:13:10.87,0:13:12.75,Default,,0,0,0,,I don't need one.
+Dialogue: 0,0:13:17.95,0:13:20.04,Default,,0,0,0,,But there are so many.
+Dialogue: 0,0:13:20.04,0:13:22.04,Default,,0,0,0,,Most of them are just junk.
+Dialogue: 0,0:13:22.25,0:13:26.00,Default,,0,0,0,,But I guess I could go look for one.
+Dialogue: 0,0:13:27.37,0:13:31.79,Default,,0,0,0,,It doesn't have to be a weapon.\NWe might find something we could use.
+Dialogue: 0,0:13:32.45,0:13:34.75,Default,,0,0,0,,Maybe we'll find food.
+Dialogue: 0,0:13:34.75,0:13:37.45,Default,,0,0,0,,No, if we're looking for food here,
+Dialogue: 0,0:13:37.45,0:13:40.87,Default,,0,0,0,,we'll either find something like rations, or find...
+Dialogue: 0,0:13:42.83,0:13:44.08,Default,,0,0,0,,Machine gun.
+Dialogue: 0,0:13:45.95,0:13:47.25,Default,,0,0,0,,Shells.
+Dialogue: 0,0:13:48.12,0:13:49.50,Default,,0,0,0,,Tank.
+Dialogue: 0,0:14:00.50,0:14:03.70,Default,,0,0,0,,Hey, you think a tank tastes good?
+Dialogue: 0,0:14:03.70,0:14:05.29,Default,,0,0,0,,Give it a try.
+Dialogue: 0,0:14:08.58,0:14:10.16,Default,,0,0,0,,Actually try it.
+Dialogue: 0,0:14:16.66,0:14:18.75,Default,,0,0,0,,It's like a big weapon graveyard.
+Dialogue: 0,0:14:22.66,0:14:26.20,Default,,0,0,0,,People long ago didn't have enough food, either.
+Dialogue: 0,0:14:26.20,0:14:28.87,Default,,0,0,0,,So why'd they build all these weapons?
+Dialogue: 0,0:14:29.16,0:14:35.08,Default,,0,0,0,,If they'd preserved food instead of making weapons,\Nour lives would be so much easier.
+Dialogue: 0,0:14:35.08,0:14:37.58,Default,,0,0,0,,Well, they had their own problems, you know.
+Dialogue: 0,0:14:38.12,0:14:39.54,Default,,0,0,0,,Like war.
+Dialogue: 0,0:14:44.58,0:14:46.79,Default,,0,0,0,,Wow! A plane!
+Dialogue: 0,0:14:52.41,0:14:54.00,Default,,0,0,0,,Did it really fly?
+Dialogue: 0,0:14:54.00,0:14:55.45,Default,,0,0,0,,A long time ago, yeah.
+Dialogue: 0,0:14:55.95,0:14:57.20,Default,,0,0,0,,I wanna fly.
+Dialogue: 0,0:14:57.20,0:14:57.95,Default,,0,0,0,,That's impossible.
+Dialogue: 0,0:14:57.95,0:14:59.66,Default,,0,0,0,,You wanna fly too, right, Chi?
+Dialogue: 0,0:14:59.66,0:15:01.50,Default,,0,0,0,,Nope, not at all.
+Dialogue: 0,0:15:12.29,0:15:14.29,Default,,0,0,0,,Is this a weapon, too?
+Dialogue: 0,0:15:15.54,0:15:17.29,Default,,0,0,0,,I dunno.
+Dialogue: 0,0:15:17.75,0:15:22.95,Default,,0,0,0,,But it was probably a bomber or something...
+Dialogue: 0,0:15:28.37,0:15:31.00,Default,,0,0,0,,War means killing one another, right?
+Dialogue: 0,0:15:31.00,0:15:33.29,Default,,0,0,0,,Why'd they do that?
+Dialogue: 0,0:15:34.70,0:15:43.66,Default,,0,0,0,,Dunno. Their interests probably didn't\Ncoincide with... the other side's!
+Dialogue: 0,0:15:54.58,0:15:59.75,Default,,0,0,0,,So like, if there are three people,\Nbut only enough food for two...
+Dialogue: 0,0:15:59.75,0:16:03.25,Default,,0,0,0,,I bet that's when you've gotta\Nget your weapon and fight.
+Dialogue: 0,0:16:03.62,0:16:05.66,Default,,0,0,0,,Same now, same then...
+Dialogue: 0,0:16:07.33,0:16:08.54,Default,,0,0,0,,Huh?
+Dialogue: 0,0:16:18.45,0:16:20.29,Default,,0,0,0,,There's a lotta different kinds.
+Dialogue: 0,0:16:27.16,0:16:29.50,Default,,0,0,0,,Look, Chi, this looks real powerful!
+Dialogue: 0,0:16:30.45,0:16:31.62,Default,,0,0,0,,Put that down.
+Dialogue: 0,0:16:32.00,0:16:33.75,Default,,0,0,0,,We don't need guns.
+Dialogue: 0,0:16:34.79,0:16:37.75,Default,,0,0,0,,There's something else we could use\Nway more than that... there!
+Dialogue: 0,0:16:38.45,0:16:39.75,Default,,0,0,0,,Explosives.
+Dialogue: 0,0:16:39.95,0:16:44.79,Default,,0,0,0,,Yup. We can use them to move stuff\Nin our way or break down walls.
+Dialogue: 0,0:16:45.45,0:16:47.16,Default,,0,0,0,,There's a whole lot.
+Dialogue: 0,0:16:47.16,0:16:48.25,Default,,0,0,0,,Yeah.
+Dialogue: 0,0:16:48.75,0:16:50.62,Default,,0,0,0,,We'll take as much as we can...
+Dialogue: 0,0:16:51.50,0:16:53.29,Default,,0,0,0,,Hey, Chi, what's this?
+Dialogue: 0,0:16:54.25,0:16:55.45,Default,,0,0,0,,Dunno.
+Dialogue: 0,0:17:05.12,0:17:06.54,Default,,0,0,0,,Rations!
+Dialogue: 0,0:17:08.37,0:17:09.70,Default,,0,0,0,,Let's grab them.\NOkay!
+Dialogue: 0,0:17:19.33,0:17:20.83,Default,,0,0,0,,Ready, up!
+Dialogue: 0,0:17:42.54,0:17:43.87,Default,,0,0,0,,Ready, go!
+Dialogue: 0,0:17:48.37,0:17:51.33,Default,,0,0,0,,Nope, it's not gonna fly.
+Dialogue: 0,0:17:52.75,0:17:54.91,Default,,0,0,0,,We don't need to fly, jeez.
+Dialogue: 0,0:17:59.58,0:18:01.08,Default,,0,0,0,,That's too bad.
+Dialogue: 0,0:18:01.08,0:18:02.41,Default,,0,0,0,,Not at all.
+Dialogue: 0,0:18:07.25,0:18:09.37,Default,,0,0,0,,Look, it can totally fly!
+Dialogue: 0,0:18:09.37,0:18:10.79,Default,,0,0,0,,It won't!
+Dialogue: 0,0:18:16.95,0:18:18.37,Default,,0,0,0,,We flew!
+Dialogue: 0,0:18:27.45,0:18:29.04,Default,,0,0,0,,I'm hungry.
+Dialogue: 0,0:18:29.04,0:18:30.04,Default,,0,0,0,,Yeah.
+Dialogue: 0,0:18:34.50,0:18:36.50,Default,,0,0,0,,Here's your half.
+Dialogue: 0,0:18:37.54,0:18:38.45,Default,,0,0,0,,Thanks.
+Dialogue: 0,0:18:43.29,0:18:44.50,Default,,0,0,0,,It's good.
+Dialogue: 0,0:18:44.50,0:18:46.12,Default,,0,0,0,,Says it's chocolate flavored.
+Dialogue: 0,0:18:46.45,0:18:48.95,Default,,0,0,0,,No idea what chocolate is, though...
+Dialogue: 0,0:19:15.87,0:19:17.54,Default,,0,0,0,,There's one more left.
+Dialogue: 0,0:19:18.16,0:19:20.95,Default,,0,0,0,,A pack of five? An odd number...
+Dialogue: 0,0:19:22.16,0:19:24.29,Default,,0,0,0,,So we'll split it in half and...
+Dialogue: 0,0:19:25.58,0:19:26.41,Default,,0,0,0,,Hey!
+Dialogue: 0,0:19:32.16,0:19:33.37,Default,,0,0,0,,Don't move.
+Dialogue: 0,0:19:35.45,0:19:36.95,Default,,0,0,0,,What are you doing?
+Dialogue: 0,0:19:37.16,0:19:39.25,Default,,0,0,0,,I'm taking it.
+Dialogue: 0,0:19:59.91,0:20:04.12,Default,,0,0,0,,I see. I should've carried a weapon too, huh...
+Dialogue: 0,0:20:04.83,0:20:05.91,Default,,0,0,0,,Yep.
+Dialogue: 0,0:20:06.37,0:20:08.70,Default,,0,0,0,,This is war.
+Dialogue: 0,0:20:11.29,0:20:13.70,Default,,0,0,0,,Hey! You actually ate it!
+Dialogue: 0,0:20:15.62,0:20:16.95,Default,,0,0,0,,Why, you!
+Dialogue: 0,0:20:20.87,0:20:22.12,Default,,0,0,0,,Hey, Yuuri!
+Dialogue: 0,0:20:22.12,0:20:22.95,Default,,0,0,0,,Ow!
+Dialogue: 0,0:20:40.33,0:20:41.37,Default,,0,0,0,,Ow!
+Dialogue: 0,0:20:41.66,0:20:43.58,Default,,0,0,0,,You little, you little!\NOw, ow!
+Dialogue: 0,0:20:44.16,0:20:45.08,Default,,0,0,0,,Ow, ow!
+Dialogue: 0,0:20:45.08,0:20:47.45,Default,,0,0,0,,You little brat!\NThat actually hurts!
+Dialogue: 0,0:20:47.87,0:20:50.62,Default,,0,0,0,,That was the last one!\NC'mon, Chi!
+Dialogue: 0,0:20:50.79,0:20:52.41,Default,,0,0,0,,You little, you little brat!
+Dialogue: 0,0:20:52.87,0:20:54.70,Default,,0,0,0,,Chi, jeez!
+Dialogue: 0,0:21:11.79,0:21:13.20,Default,,0,0,0,,That was yummy.
+Dialogue: 0,0:21:13.70,0:21:16.70,Default,,0,0,0,,J-just you wait.
+Dialogue: 0,0:21:21.87,0:21:24.70,Default,,0,0,0,,I moved around too much and now I'm hungry.
+Dialogue: 0,0:21:39.83,0:21:41.75,Default,,0,0,0,,The snow's yummy, too.
+Dialogue: 0,0:21:47.75,0:21:50.83,Default,,0,0,0,,Having to eat0
