@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from requests import get , post, Session
 import time
 import os
@@ -215,7 +217,7 @@ class AnimelonDownloader():
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
 	parser.add_argument('videoURLs', metavar='videoURLs', type=str, nargs='+',
-						help='A video page URL, eg: https://animelon.com/video/579b1be6c13aa2a6b28f1364')
+						help='A series or video page URL, eg: https://animelon.com/series/Death%%20Note or https://animelon.com/video/579b1be6c13aa2a6b28f1364')
 	parser.add_argument('-d', "--sleepTime", metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
 	parser.add_argument('--savePath', metavar='savePath', help='Path to save', type=str, default="")
 	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
