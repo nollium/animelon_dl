@@ -157,6 +157,12 @@ class AnimelonDownloader():
 	#	for i in subs:
 	#		self.saveSubtitleToFile(i[0], i[1], savePath=savePath)
 
+	def languageSubToIso(self, languageSub:str):
+		iso = {"englishSub" : "en", 'romajiSub' : "ja", "japaneseSub" : "jp", "hiraganaSub" : "hiragana"}
+		if languageSub in iso:
+			return (iso[languageSub])
+		return (languageSub)
+
 	def saveSubtitleToFile(self, languageSub, content, videoName:str="" ,savePath:str=None):
 		'''
 			Saves the subtitle to a file
@@ -172,8 +178,9 @@ class AnimelonDownloader():
 			savePath = self.savePath
 		ext = ".ass"
 		if content[0:4] == b"\x31\x0A\x30\x30": #srt magicbytes
-			ext = ".srt"	
-		fileName = languageSub + "_" + videoName + ext
+			ext = ".srt"
+		languageSub = self.languageSubToIso(languageSub)
+		fileName = videoName + languageSub + ext
 		fileName = os.path.join(savePath, fileName)
 		with open(fileName, "wb") as f:
 			f.write(content)
