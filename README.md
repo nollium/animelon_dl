@@ -7,6 +7,8 @@ Command line downloader for https://animelon.com/
        requests
        progressbar
        numpy
+       pycryptodome
+       hashlib
 ## Usage:
 
     ⇒  ./animelon_dl.py -h
