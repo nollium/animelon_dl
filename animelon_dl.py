@@ -35,7 +35,7 @@ class AnimelonDownloader():
 		'''
 		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
 		% (self.baseURL, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
-		return rep
+		return (rep)
 
 	def waitForFreeProcess(self, processMax=None):
 		'''
@@ -61,7 +61,7 @@ class AnimelonDownloader():
 		p = Process(target=function, args=args)
 		self.processList.append(p)
 		p.start()
-		return p
+		return (p)
 
 	def __del__(self):
 		'''
@@ -99,7 +99,7 @@ class AnimelonDownloader():
 				f.write(chunk)
 				if bar is not None:
 					bar.update(i+1)
-		return fileName
+		return (fileName)
 		# (did not)Add a little sleep so you can see the bar progress
 
 	def getSubtitleFromJSON(self, resObj, languageSubList:list=None):
@@ -121,7 +121,7 @@ class AnimelonDownloader():
 			for j in languageSubList:
 				if j in subtitleList.keys():
 					subtitles.append((j, decryptor.decrypt_subtitle(subtitleList[j])))
-		return subtitles
+		return (subtitles)
 
 	#def saveSubtitle(self, resObj, languageSubList:list=None, savePath:str=None):
 	#	'''	Parse the subtitle from resObj and saves them '''
@@ -149,9 +149,9 @@ class AnimelonDownloader():
 		fileName = os.path.join(savePath, fileName)
 		with open(fileName, "wb") as f:
 			f.write(content)
-		return fileName
+		return (fileName)
 
-	def saveSubtitleFromResObj(self, resObj, videoName=None, languageSubList:list=None, savePath:str=None):
+	def saveSubtitlesFromResObj(self, resObj, videoName=None, languageSubList:list=None, savePath:str=None):
 		'''
 		Parse the subtitle from resObj and saves them
 			Parameters:
@@ -159,11 +159,14 @@ class AnimelonDownloader():
 				videoName: the name of the video
 				languageSubList: the list of languageSub to save (englishSub, romajiSub, hiraganaSub, japaneseSub)
 				savePath: the path to save the subtitle to
-
+			Returns:
+				a list of file names
 		'''
-		subs = self.getSubtitleFromJSON(resObj, languageSubList)
-		for i in subs:
-			self.saveSubtitleToFile(i[0], i[1], savePath=savePath, videoName=videoName)
+		fileNames = []
+		subtitleList = self.getSubtitleFromJSON(resObj, languageSubList)
+		for sub in subtitleList:
+			fileNames.append(self.saveSubtitleToFile(sub[0], sub[1], savePath=savePath, videoName=videoName))
+		return (fileNames)
 	
 	def downloadFromResObj(self, resObj, fileName=None, saveSubtitle=True):
 		''' Downloads the video and it's subtitles from the API's JSON's resObj
@@ -178,7 +181,7 @@ class AnimelonDownloader():
 		if fileName is None:
 			fileName = os.path.join(self.savePath, title + ".mp4")
 		if saveSubtitle:
-			self.saveSubtitleFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
+			self.saveSubtitlesFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
 		video = (resObj["video"])
 		videoUrls = video["videoURLsData"]
 		#list of lists of lists of urls, yeah
@@ -193,12 +196,12 @@ class AnimelonDownloader():
 						if videoStream.status_code == 200:
 							self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
 							print ("Finished downloading ", fileName)
-							return fileName
+							return (fileName)
 			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
 			time.sleep(self.sleepTime * i)
 			
 		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
-		return None
+		return (None)
 
 #unused and unfinished
 	def recursiveDownload(self, url, filename=None):
@@ -210,12 +213,12 @@ class AnimelonDownloader():
 			headers = response.headers
 			if (headers["Content-Type"] == "video/mp4"):
 				self.downloadVideo(url, fileName=filename, stream=response)
-				return
+				return ()
 			elif (headers["Content-Type"] == "application/json"):
 				data = json.loads(response.content)
 				if "resObj" in data.keys():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
-					return
+					return ()
 
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False, saveSubtitle=True):
 		''' Downloads a video from the video page or it's id
@@ -232,7 +235,7 @@ class AnimelonDownloader():
 		if background:
 			self.launchBackgroundTask(self.downloadFromVideoPage, (url, id, fileName, False))
 			time.sleep(self.sleepTime)
-			return None
+			return (None)
 		if url is None:
 			url = self.baseURL + "video/" + id
 		if id is None:
@@ -240,7 +243,7 @@ class AnimelonDownloader():
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
 		jsonsed = json.loads(response.content)
-		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle))
+		return ((self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)))
 
 	def getEpisodeList(self, seriesUrl):
 		''' Returns a list of all the episodes of a series from the series page
@@ -257,18 +260,18 @@ class AnimelonDownloader():
 			time.sleep(0.5)
 		if (statusCode != 200):
 			print ("Error getting anime info")
-			return None
+			return (None)
 		try:
 			jsoned = json.loads(response.text)
 			resObj = jsoned["resObj"]
 			if resObj is None and '\\' in seriesUrl:
 				seriesUrl = seriesUrl.replace('\\', '')
-				return (self.getEpisodeList(seriesUrl))
+				return ((self.getEpisodeList(seriesUrl)))
 			assert (resObj is not None)
 		except Exception as e:
 			print ("Error: Could not parse anime info :\n", e, url , "\n", response, response.content, file=sys.stderr)
-			return None
-		return resObj
+			return (None)
+		return (resObj)
 
 	def initSavePath(self, name):
 		'''
@@ -283,7 +286,7 @@ class AnimelonDownloader():
 		if self.savePath == "":
 			self.savePath = "./"
 		os.makedirs(self.savePath, exist_ok=True)
-		return self.savePath
+		return (self.savePath)
 
 	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0, savePath:str="./"):
 		'''
@@ -315,7 +318,7 @@ class AnimelonDownloader():
 				except Exception as e:
 					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
-		return downloadedEpisodes
+		return (downloadedEpisodes)
 
 #episodesToDownload = {season_i : [episode_j, episode_j+1]}
 	def downloadSeries(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
@@ -334,7 +337,7 @@ class AnimelonDownloader():
 		'''
 		resObj = self.getEpisodeList(url)
 		if resObj is None:
-			return
+			return ()
 		title = resObj["_id"]
 		print("Title: ", title)
 		seriesSavePath = os.path.join(self.savePath, title)
@@ -351,7 +354,7 @@ class AnimelonDownloader():
 				downloadedEpisodesDict[seasonNumber] = downloadedEpisodes
 		if background is False:
 			self.waitForFreeProcess(1)
-		return downloadedEpisodesDict
+		return (downloadedEpisodesDict)
 
 	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, parallell=False):
 		'''
@@ -369,7 +372,7 @@ class AnimelonDownloader():
 			type = url.split('/')[3]
 		except IndexError:
 			print('Error: Bad URL : "%s"' % url)
-			return
+			return ()
 		if type == 'series':
 			dl = downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
 		elif type == 'video':
@@ -394,7 +397,7 @@ class AnimelonDownloader():
 			dlEpisodes.append(self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True))
 		if background is False:
 			self.waitForFreeProcess(1)
-		return dlEpisodes
+		return (dlEpisodes)
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
