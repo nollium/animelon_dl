@@ -12,7 +12,22 @@ import sys
 import subtitle_decryptor
 
 class AnimelonDownloader():
-	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="./", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
+	def __init__(self, baseURL:str="https://animelon.com/", session=Session(), processMax:int=1, sleepTime:int=5,
+				maxTries:int=5, savePath:str="./", subtitlesTypes:list=["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"],
+				sleepTimeRetry=5,
+				userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
+		'''
+			Initialize the downloader
+			Parameters:
+				baseURL: the base url of the API
+				session: the requests session
+				processMax: the maximum number of processes to use
+				sleepTime: the time to sleep between requests
+				maxTries: the maximum number of tries to make
+				savePath: the path to save the files to
+				subtitlesTypes: the types of subtitle to download (englishSub, romajiSub, hiraganaSub, japaneseSub)
+				userAgent: the user agent to use
+		'''
 		self.baseURL = baseURL
 		self.session = session
 		self.userAgent = userAgent
@@ -23,10 +38,11 @@ class AnimelonDownloader():
 		self.processList = []
 		self.processMax = processMax
 		self.sleepTime = sleepTime
+		self.sleepTimeRetry = sleepTimeRetry
 		self.maxTries = maxTries
 		self.savePath = savePath
 		self.initSavePath(savePath)
-		self.subtitleTypes = ["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"]
+		self.subtitlesTypes = subtitlesTypes
 
 	def __repr__(self):
 		'''
@@ -113,7 +129,7 @@ class AnimelonDownloader():
 		'''
 		decryptor = subtitle_decryptor.SubtitleDecryptor()
 		if languageSubList is None:
-			languageSubList = self.subtitleTypes
+			languageSubList = self.subtitlesTypes
 		subtitles = []
 		subObj = resObj["subtitles"]
 		for i in subObj:
@@ -198,7 +214,7 @@ class AnimelonDownloader():
 							print ("Finished downloading ", fileName)
 							return (fileName)
 			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
-			time.sleep(self.sleepTime * i)
+			time.sleep(self.sleepTimeRetry * i)
 			
 		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
 		return (None)
@@ -407,8 +423,12 @@ if __name__ == "__main__":
 	parser.add_argument("--savePath", '-f', metavar='savePath', help='Path to save', type=str, default="")
 	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
 	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
+	parser.add_argument('--sleepTimeRetry', metavar='sleepTimeRetry', help='Sleep time between retries (defaults to 5)', type=int, default=5)
+	parser.add_argument('--subtitlesType', metavar='subtitlesType', help='Subtitles types to download (englishSub, romajiSub, hiraganaSub, japaneseSub, none)',\
+		type=str, default=("englishSub", "romajiSub", "hiraganaSub", "japaneseSub"), nargs='+')
 	args = parser.parse_args()
+	print(args.subtitlesType)
 	urls = args.videoURLs
-	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime)
+	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime, sleepTimeRetry=args.sleepTimeRetry, subtitlesTypes=args.subtitlesType)
 	downloader.downloadFromURLList(urls)
 	exit(0)
