@@ -172,8 +172,7 @@ class AnimelonDownloader():
 					fileName: the name of the video file to be saved
 					saveSubtitle: whether to save the subtitle or not
 				Returns:
-					False in case of failure
-					True in case of success
+					the file name
 		'''
 		title = resObj["title"]
 		if fileName is None:
@@ -194,12 +193,12 @@ class AnimelonDownloader():
 						if videoStream.status_code == 200:
 							self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
 							print ("Finished downloading ", fileName)
-							return True
+							return fileName
 			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
 			time.sleep(self.sleepTime * i)
 			
 		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
-		return False
+		return None
 
 #unused and unfinished
 	def recursiveDownload(self, url, filename=None):
@@ -220,12 +219,14 @@ class AnimelonDownloader():
 
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False, saveSubtitle=True):
 		''' Downloads a video from the video page or it's id
-				Parmeters:
+				Parameters:
 					url: the video page url (https://animelon.com/video/5b5412ce33107581e4f672a5)
 					id: the video id (5b5412ce33107581e4f672a5)
 					fileName: the file name to save the video to
 					background: if True, the download will be started in the background
 					saveSubtitle: if True, the subtitle will be saved
+				Returns:
+					the file name
 		'''
 		assert(url is not None or id is not None)
 		if background:
@@ -274,12 +275,15 @@ class AnimelonDownloader():
 		Initialize the save path and creates the directories
 			Parameters:
 				name: the name of the anime
+			Returns:
+				the save path
 		'''
 		if self.savePath == "./" or name == "":
 			self.savePath = name
 		if self.savePath == "":
 			self.savePath = "./"
 		os.makedirs(self.savePath, exist_ok=True)
+		return self.savePath
 
 	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0, savePath:str="./"):
 		'''
@@ -291,8 +295,11 @@ class AnimelonDownloader():
 					episodesToDownload: dict of episodes to download
 					seasonNumber: season number
 					savePath: path to save the episodes
+				Returns:
+					the list of downloaded episodes
 		'''
 		index = 0
+		downloadedEpisodes = []
 		for episode in episodes:
 			index += 1
 			if episodesToDownload is None or index in episodesToDownload[seasonNumber]:
@@ -304,9 +311,11 @@ class AnimelonDownloader():
 				print(fileName, " : ", url)
 				try:
 					self.downloadFromVideoPage(url, fileName=fileName, background=True)
+					downloadedEpisodes.append(index)
 				except Exception as e:
 					print("Error: Failed to download " + url, file=sys.stderr)
 					print(e)
+		return downloadedEpisodes
 
 #episodesToDownload = {season_i : [episode_j, episode_j+1]}
 	def downloadSeries(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
@@ -318,6 +327,10 @@ class AnimelonDownloader():
 					seasonsToDownload: list of seasons to download
 					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
 					background: if true, the downloads will be launched in a background process
+				Returns:
+					A dict of downloaded episodes
+						key: season number
+						value: list of downloaded episodes
 		'''
 		resObj = self.getEpisodeList(url)
 		if resObj is None:
@@ -326,6 +339,7 @@ class AnimelonDownloader():
 		print("Title: ", title)
 		seriesSavePath = os.path.join(self.savePath, title)
 		seasons = resObj["seasons"]
+		downloadedEpisodesDict = dict()
 		for season in seasons:
 			seasonNumber = int(season["number"])
 			seasonSavePath = os.path.join(seriesSavePath, "S%.2d" % seasonNumber)
@@ -333,9 +347,11 @@ class AnimelonDownloader():
 			if seasonsToDownload is None or seasonNumber in seasonsToDownload:
 				print("Season %d:" % (seasonNumber))
 				episodes = season["episodes"]
-				self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber, savePath=seasonSavePath)
+				downloadedEpisodes = self.downloadEpisodes(episodes, title, episodesToDownload=episodesToDownload, seasonNumber=seasonNumber, savePath=seasonSavePath)
+				downloadedEpisodesDict[seasonNumber] = downloadedEpisodes
 		if background is False:
 			self.waitForFreeProcess(1)
+		return downloadedEpisodesDict
 
 	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, parallell=False):
 		'''
@@ -346,6 +362,8 @@ class AnimelonDownloader():
 					seasonsToDownload: list of seasons to download
 					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
 					parallell: if true, the downloads will be launched in a background process
+				Returns:
+					Either a dict of downloaded episodes or 				
 		'''
 		try:
 			type = url.split('/')[3]
@@ -353,7 +371,7 @@ class AnimelonDownloader():
 			print('Error: Bad URL : "%s"' % url)
 			return
 		if type == 'series':
-			downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
+			dl = downloader.downloadSeries(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload)
 		elif type == 'video':
 			downloader.downloadFromVideoPage(url, background=parallell)
 		else:
@@ -368,11 +386,15 @@ class AnimelonDownloader():
 					seasonsToDownload: list of seasons to download
 					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
 					background: if true, the downloads will be launched in background processes
+				Returns:
+					A list of dict of downloaded episodes
 		'''
+		dlEpisodes = []
 		for url in URLs:
-			self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True)
+			dlEpisodes.append(self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True))
 		if background is False:
 			self.waitForFreeProcess(1)
+		return dlEpisodes
 
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
