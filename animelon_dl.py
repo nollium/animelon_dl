@@ -229,7 +229,6 @@ class AnimelonDownloader():
 							print ("Finished downloading ", fileName)
 							return (fileName)
 			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
-			print(resObj)
 			time.sleep(self.sleepTimeRetry * i)
 			
 		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
