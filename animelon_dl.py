@@ -116,7 +116,7 @@ class AnimelonDownloader():
 			# Estimates the number of bar updates
 		block_size = 1024
 		file_size = int(video.headers.get('Content-Length', None))
-		print ("Downloading : ", fileName , "(%.2f MB)" % (file_size * 1024 ** -2) , quality, " quality", " ...\n")
+		print ("Downloading : ", fileName.split('/')[-1] , "(%.2f MB)" % (file_size * 1024 ** -2) , quality, " quality", " ...\n")
 		n_chunk = 2
 		num_bars = np.ceil(file_size / (n_chunk * block_size))
 		bar = None
