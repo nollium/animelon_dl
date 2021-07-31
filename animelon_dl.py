@@ -29,11 +29,18 @@ class AnimelonDownloader():
 		self.subtitleTypes = ["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"]
 
 	def __repr__(self):
+		'''
+			Returns:
+				the string representation of the object
+		'''
 		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
 		% (self.baseURL, self.processMax, self.sleepTime, self.maxTries, self.savePath, self.session, self.userAgent, self.headers, self.processList)
 		return rep
 
 	def waitForFreeProcess(self, processMax=None):
+		'''
+			Waits for the process list to be < processMax long
+		'''
 		if processMax is None:
 			processMax = self.processMax
 		while len(self.processList) >= processMax:
@@ -42,15 +49,36 @@ class AnimelonDownloader():
 			time.sleep(5)
 
 	def launchBackgroundTask(self, function, args:tuple):
+		'''
+			Launches a background task and adds it to the process list.
+				Parameters:
+					function: the function to run
+					args: the arguments to pass to the function
+				Returns:
+					the process
+		'''
 		self.waitForFreeProcess()
 		p = Process(target=function, args=args)
 		self.processList.append(p)
 		p.start()
+		return p
 
 	def __del__(self):
+		'''
+			Closes the session
+		'''
 		self.waitForFreeProcess(1)
 
 	def downloadVideo(self, url, fileName=None, stream=None):
+		'''
+			Downloads a video from the url
+				Parameters:
+					url: the url of the video
+					fileName: the name of the video
+					stream: the stream to download from (mp4, webm, ogg, mkv)
+				Returns:
+					the file name
+		'''
 		if fileName is None:
 			fileName = url.split("/")[-1] + ".mp4"
 			fileName = os.path.join(self.savePath, fileName)
@@ -71,12 +99,18 @@ class AnimelonDownloader():
 				f.write(chunk)
 				if bar is not None:
 					bar.update(i+1)
+		return fileName
 		# (did not)Add a little sleep so you can see the bar progress
 
 	def getSubtitleFromJSON(self, resObj, languageSubList:list=None):
-		"""	Retrieves subtitle from API's resObj['resObj']['subtitles'][n]['content']['languageSub'] and uncipheres them
-			Returns a list of tuple [(languageSub, uncipheredContent), ... ]
-		"""
+		'''	Retrieves subtitle from API's resObj['resObj']['subtitles'][n]['content']['languageSub'] and uncipheres them
+				Paremeters:
+					resObj: the response object from the API
+					languageSubList: the list of languageSub to save (englishSub, romajiSub, hiraganaSub, japaneseSub)
+					savePath: the path to save the subtitle to
+				Return:
+					a list of tuples (subtitleName, subtitleContent)
+		'''
 		decryptor = subtitle_decryptor.SubtitleDecryptor()
 		if languageSubList is None:
 			languageSubList = self.subtitleTypes
@@ -90,33 +124,62 @@ class AnimelonDownloader():
 		return subtitles
 
 	#def saveSubtitle(self, resObj, languageSubList:list=None, savePath:str=None):
-	#	"""	Parse the subtitle from resObj and saves them """
+	#	'''	Parse the subtitle from resObj and saves them '''
 	#	subs = self.getSubtitleFromJSON(resObj, languageSubList)
 	#	for i in subs:
 	#		self.saveSubtitleToFile(i[0], i[1], savePath=savePath)
 
 	def saveSubtitleToFile(self, languageSub, content, videoName:str="" ,savePath:str=None):
+		'''
+			Saves the subtitle to a file
+				Parmeters:
+					languageSub: the language of the subtitle (englishSub, romajiSub, hiraganaSub, japaneseSub)
+					content: the content of the subtitle
+					videoName: the name of the video
+					savePath: the path to save the file
+				Returns:
+					the file name
+		'''
 		if savePath is None:
 			savePath = self.savePath
 		ext = ".ass"
-		if content[0:4] == b"\x31\x0A\x30\x30":
+		if content[0:4] == b"\x31\x0A\x30\x30": #srt magicbytes
 			ext = ".srt"	
 		fileName = languageSub + "_" + videoName + ext
 		fileName = os.path.join(savePath, fileName)
 		with open(fileName, "wb") as f:
 			f.write(content)
+		return fileName
 
 	def saveSubtitleFromResObj(self, resObj, videoName=None, languageSubList:list=None, savePath:str=None):
-		"""	Parse the subtitle from resObj and saves them """
+		'''
+		Parse the subtitle from resObj and saves them
+			Parameters:
+				resObj: the resOBJ JSON object from the JSON response from the API
+				videoName: the name of the video
+				languageSubList: the list of languageSub to save (englishSub, romajiSub, hiraganaSub, japaneseSub)
+				savePath: the path to save the subtitle to
+
+		'''
 		subs = self.getSubtitleFromJSON(resObj, languageSubList)
 		for i in subs:
 			self.saveSubtitleToFile(i[0], i[1], savePath=savePath, videoName=videoName)
 	
-	def downloadFromResObj(self, resObj, fileName=None):
+	def downloadFromResObj(self, resObj, fileName=None, saveSubtitle=True):
+		''' Downloads the video and it's subtitles from the API's JSON's resObj
+				Parameters:
+					resObj: the resOBJ JSON object from the JSON response from the API
+					fileName: the name of the video file to be saved
+					saveSubtitle: whether to save the subtitle or not
+				Returns:
+					False in case of failure
+					True in case of success
+		'''
 		title = resObj["title"]
-		self.saveSubtitleFromResObj(resObj, videoName=title, savePath=self.savePath)
 		if fileName is None:
 			fileName = os.path.join(self.savePath, title + ".mp4")
+		if saveSubtitle:
+			self.saveSubtitleFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
 		video = (resObj["video"])
 		videoUrls = video["videoURLsData"]
 		#list of lists of lists of urls, yeah
@@ -140,6 +203,9 @@ class AnimelonDownloader():
 
 #unused and unfinished
 	def recursiveDownload(self, url, filename=None):
+		'''
+			Do not use
+		'''
 		response = get(url, headers=self.headers, stream=True)
 		if response.status_code == 200:
 			headers = response.headers
@@ -152,7 +218,15 @@ class AnimelonDownloader():
 					self.downloadFromResObj(data["resObj"], fileName=filename)
 					return
 
-	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False):
+	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False, saveSubtitle=True):
+		''' Downloads a video from the video page or it's id
+				Parmeters:
+					url: the video page url (https://animelon.com/video/5b5412ce33107581e4f672a5)
+					id: the video id (5b5412ce33107581e4f672a5)
+					fileName: the file name to save the video to
+					background: if True, the download will be started in the background
+					saveSubtitle: if True, the subtitle will be saved
+		'''
 		assert(url is not None or id is not None)
 		if background:
 			self.launchBackgroundTask(self.downloadFromVideoPage, (url, id, fileName, False))
@@ -165,9 +239,12 @@ class AnimelonDownloader():
 		apiUrl = self.apiVideoFormat % (id)
 		response = get(apiUrl, headers=self.headers)
 		jsonsed = json.loads(response.content)
-		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName))
+		return (self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle))
 
 	def getEpisodeList(self, seriesUrl):
+		''' Returns a list of all the episodes of a series from the series page
+			ex: https://animelon.com/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
+		'''
 		seriesName = seriesUrl.rsplit('/', 1)[-1]
 		url = self.baseURL + "api/series/" + seriesName
 		statusCode = 403
@@ -193,6 +270,11 @@ class AnimelonDownloader():
 		return resObj
 
 	def initSavePath(self, name):
+		'''
+		Initialize the save path and creates the directories
+			Parameters:
+				name: the name of the anime
+		'''
 		if self.savePath == "./" or name == "":
 			self.savePath = name
 		if self.savePath == "":
@@ -200,6 +282,16 @@ class AnimelonDownloader():
 		os.makedirs(self.savePath, exist_ok=True)
 
 	def downloadEpisodes(self, episodes:dict, title:str, episodesToDownload:dict=None, seasonNumber:int=0, savePath:str="./"):
+		'''
+			Downloads the episodes from the episodes dict
+
+				Parameters:
+					episodes: dict of episodes
+					title: name of the series
+					episodesToDownload: dict of episodes to download
+					seasonNumber: season number
+					savePath: path to save the episodes
+		'''
 		index = 0
 		for episode in episodes:
 			index += 1
@@ -207,6 +299,7 @@ class AnimelonDownloader():
 				self.waitForFreeProcess()
 				url = self.baseURL + "video/" + episode
 				fileName = title + " S" + str(seasonNumber) + "E" + str(index) + ".mp4"
+				os.makedirs(savePath, exist_ok=True)
 				fileName = os.path.join(savePath, fileName)
 				print(fileName, " : ", url)
 				try:
@@ -217,8 +310,15 @@ class AnimelonDownloader():
 
 #episodesToDownload = {season_i : [episode_j, episode_j+1]}
 	def downloadSeries(self, url, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
-		#https://animelon.com/api/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
-		#url = everything after last /
+		'''
+			Downloads the episodes of a series from it's page url (/series/)
+
+				Parameters:
+					url: url of the series page
+					seasonsToDownload: list of seasons to download
+					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
+					background: if true, the downloads will be launched in a background process
+		'''
 		resObj = self.getEpisodeList(url)
 		if resObj is None:
 			return
@@ -238,6 +338,15 @@ class AnimelonDownloader():
 			self.waitForFreeProcess(1)
 
 	def downloadFromURL(self, url:str, seasonsToDownload:list=None, episodesToDownload:dict=None, parallell=False):
+		'''
+			Either downloads the episodes of a series from it's page url (/series/) or downloads the episodes of a video from it's page url (/video/)
+				
+				Parameters:
+					url: url of the video or series page
+					seasonsToDownload: list of seasons to download
+					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
+					parallell: if true, the downloads will be launched in a background process
+		'''
 		try:
 			type = url.split('/')[3]
 		except IndexError:
@@ -252,6 +361,14 @@ class AnimelonDownloader():
 
 
 	def downloadFromURLList(self, URLs:list, seasonsToDownload:list=None, episodesToDownload:dict=None, background=False):
+		'''
+			Downloads the episodes of a series from a list of URLs
+				Parameters:
+					URLs: list of URLs
+					seasonsToDownload: list of seasons to download
+					episodesToDownload: dict of episodes to download, keys are season number, values are list of episode numbers
+					background: if true, the downloads will be launched in background processes
+		'''
 		for url in URLs:
 			self.downloadFromURL(url, seasonsToDownload=seasonsToDownload, episodesToDownload=episodesToDownload, parallell=True)
 		if background is False:
