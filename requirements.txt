@@ -1,4 +1,5 @@
 requests
 progressbar
 numpy
-asstosrt
+pycryptodome
+hashlib
