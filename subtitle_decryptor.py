@@ -20,13 +20,36 @@ class SubtitleDecryptor:
             }
     """
     def pad(self, data):
+        '''
+        Pads the data for AES encryption/decryption.
+            Parameters:
+                data (bytes): The data to pad.
+            Returns:
+                (bytes): The padded data.
+        '''
         length = 16 - (len(data) % 16)
         return data + (chr(length)*length).encode()
     
     def unpad(self, data):
+        '''
+        Unpads the data for AES encryption/decryption.
+            Parameters:
+                data (bytes): The data to unpad.
+            Returns:
+                (bytes): The unpadded data.
+        '''
         return data[:-(data[-1] if type(data[-1]) == int else ord(data[-1]))]
     
     def bytes_to_key(self, data, salt, output=48):
+        '''
+        Derive a key from a password using the PBKDF2 algorithm.
+            Parameters:
+                data (bytes): The password to derive the key from.
+                salt (bytes): Salt for the password.
+                output (int): The length of the key to return.
+            Returns:
+                (bytes): The derived key.
+        '''
         # extended from https://gist.github.com/gsakkis/4546068
         assert len(salt) == 8, len(salt)
         data += salt
@@ -38,6 +61,14 @@ class SubtitleDecryptor:
         return final_key[:output]
     
     def encrypt(self, message, passphrase):
+        '''
+        Encrypts the message using the passphrase.
+            Parameters:
+                message (bytes): The message to encrypt.
+                passphrase (bytes): The passphrase to use for encryption.
+            Returns:
+                (bytes): The encrypted message.
+        '''
         salt = Random.new().read(8)
         key_iv = self.bytes_to_key(passphrase, salt, 32+16)
         key = key_iv[:32]
@@ -46,6 +77,14 @@ class SubtitleDecryptor:
         return base64.b64encode(b"Salted__" + salt + aes.encrypt(self.pad(message)))
     
     def decrypt(self, encrypted:bytes, passphrase:bytes):
+        '''
+        Decrypts the message using the passphrase.
+            Parameters:
+                encrypted (bytes): The encrypted message.
+                passphrase (bytes): The passphrase to use for decryption.
+            Returns:
+                (bytes): The decrypted message.
+        '''
         encrypted = base64.b64decode(encrypted)
         encrypted = self.pad(encrypted)
         assert encrypted[0:8] == b"Salted__"
@@ -57,6 +96,13 @@ class SubtitleDecryptor:
         return self.unpad(aes.decrypt(encrypted[16:]))
 
     def decrypt_subtitle(self, encryptedSubtitle:str):
+        '''
+        Decrypts the encrypted subtitles
+            Parameters:
+                encryptedSubtitle (str): The encrypted subtitle in base64
+            Returns:
+                (bytes): The decrypted subtitle as a byte string
+        '''
         encryptedSubtitle = bytes(encryptedSubtitle, 'utf-8')
         key = encryptedSubtitle[0:8][::-1]
         data = encryptedSubtitle[8:-5]
