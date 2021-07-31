@@ -12,9 +12,9 @@ import sys
 import subtitle_decryptor
 
 class AnimelonDownloader():
-	def __init__(self, baseURL:str="https://animelon.com/", session=Session(), processMax:int=1, sleepTime:int=5,
+	def __init__(self, baseURL:str="https://animelon.com/", session=Session(), processMax:int=1, sleepTime:int=0,
 				maxTries:int=5, savePath:str="./", subtitlesTypes:list=["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"],
-				sleepTimeRetry=5,
+				sleepTimeRetry=5, qualityPriorities=["ozez", "stz", "tsz"],
 				userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
 		'''
 			Initialize the downloader
@@ -27,12 +27,13 @@ class AnimelonDownloader():
 				savePath: the path to save the files to
 				subtitlesTypes: the types of subtitle to download (englishSub, romajiSub, hiraganaSub, japaneseSub)
 				userAgent: the user agent to use
+				sleepTimeRetry: the time to sleep between retries
+				qualityPriorities: the quality priorities to use [best, .., worst], ozez is the best, stz is the medium, tsz is the worst
 		'''
 		self.baseURL = baseURL
 		self.session = session
 		self.userAgent = userAgent
-		self.videoUserAgent="Mozilla/5=+(dot)+=0 (Linux; Android 9; CPH2015) AppleWebKit/537=+(dot)+=36 (KHTML, like Gecko) Chrome/91=+(dot)+=0=+(dot)+=4472=+(dot)+=164 Mobile Safari/537=+(dot)+=36"
-		self.headers = { "user-agent": self.userAgent }
+		self.headers = { "User-Agent": self.userAgent }
 		self.apiVideoFormat = "https://animelon.com/api/languagevideo/findByVideo?videoId=%s&learnerLanguage=en&subs=1&cdnLink=1&viewCounter=1"
 		self.session.headers.update(self.headers)
 		self.processList = []
@@ -43,6 +44,17 @@ class AnimelonDownloader():
 		self.savePath = savePath
 		self.initSavePath(savePath)
 		self.subtitlesTypes = subtitlesTypes
+		self.qualityPriorities = qualityPriorities
+
+	def updateUserAgent(self, userAgent:str):
+		'''
+			Updates the user agent
+			Parameters:
+				userAgent: the new user agent
+		'''
+		self.userAgent = userAgent
+		self.headers = { "User-Agent": self.userAgent }
+		self.session.headers.update(self.headers)
 
 	def __repr__(self):
 		'''
@@ -85,7 +97,7 @@ class AnimelonDownloader():
 		'''
 		self.waitForFreeProcess(1)
 
-	def downloadVideo(self, url, fileName=None, stream=None):
+	def downloadVideo(self, url, fileName=None, stream=None, quality="unknown"):
 		'''
 			Downloads a video from the url
 				Parameters:
@@ -104,7 +116,7 @@ class AnimelonDownloader():
 			# Estimates the number of bar updates
 		block_size = 1024
 		file_size = int(video.headers.get('Content-Length', None))
-		print ("Downloading : ", fileName , "(%.2f MB)" % (file_size * 1024 ** -2) , " ...\n")
+		print ("Downloading : ", fileName , "(%.2f MB)" % (file_size * 1024 ** -2) , quality, " quality", " ...\n")
 		n_chunk = 2
 		num_bars = np.ceil(file_size / (n_chunk * block_size))
 		bar = None
@@ -199,21 +211,25 @@ class AnimelonDownloader():
 		if saveSubtitle:
 			self.saveSubtitlesFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
 		video = (resObj["video"])
-		videoUrls = video["videoURLsData"]
-		#list of lists of lists of urls, yeah
-		#only one of them is valid, so we try all of them
+		videoURLs = video["videoURLsData"]
+		time.sleep(self.sleepTime)
 		for i in range(1, self.maxTries + 1):
-			for mobileUrlList in videoUrls.values():
-				for mobileUrlList in videoUrls.values():
-					videoUrlsSublist = mobileUrlList["videoURLs"]
-					for videoUrl in videoUrlsSublist.values():
-						time.sleep(0.2)
-						videoStream = self.session.get(videoUrl, stream=True)
+			for userAgentKey in videoURLs.keys():
+				# animelon will allow us to download the video only if we send the corresponding user agent
+				#also idk why the userAgent is formatted that way in the JSON, but we have to replace this.
+				self.updateUserAgent(userAgentKey.replace("=+(dot)+=", "."))
+				mobileUrlList = videoURLs[userAgentKey]
+				videoURLsSublist = mobileUrlList["videoURLs"]
+				for quality in self.qualityPriorities:
+					if quality in videoURLsSublist.keys():
+						videoURL = videoURLsSublist[quality]
+						videoStream = self.session.get(videoURL, stream=True)
 						if videoStream.status_code == 200:
-							self.downloadVideo(videoUrl, fileName=fileName, stream=videoStream)
+							self.downloadVideo(videoURL, fileName=fileName, stream=videoStream, quality=quality)
 							print ("Finished downloading ", fileName)
 							return (fileName)
 			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
+			print(resObj)
 			time.sleep(self.sleepTimeRetry * i)
 			
 		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
@@ -427,7 +443,6 @@ if __name__ == "__main__":
 	parser.add_argument('--subtitlesType', metavar='subtitlesType', help='Subtitles types to download (englishSub, romajiSub, hiraganaSub, japaneseSub, none)',\
 		type=str, default=("englishSub", "romajiSub", "hiraganaSub", "japaneseSub"), nargs='+')
 	args = parser.parse_args()
-	print(args.subtitlesType)
 	urls = args.videoURLs
 	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime, sleepTimeRetry=args.sleepTimeRetry, subtitlesTypes=args.subtitlesType)
 	downloader.downloadFromURLList(urls)
