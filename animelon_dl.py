@@ -9,6 +9,7 @@ from multiprocessing import Process
 import progressbar
 import argparse
 import sys
+import subtitle_decryptor
 
 class AnimelonDownloader():
 	def __init__(self, baseURL="https://animelon.com/", session=Session(), processMax=1, sleepTime=5, maxTries=5, savePath="./", userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
@@ -25,6 +26,7 @@ class AnimelonDownloader():
 		self.maxTries = maxTries
 		self.savePath = savePath
 		self.initSavePath(savePath)
+		self.subtitleTypes = ["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"]
 
 	def __repr__(self):
 		rep = 'AnimelonDownloader(baseURL="%s", processMax=%d, sleepTime=%d, maxTries=%d, savePath="%s", session=%s, userAgent="%s", headers="%s", processList=%s)' \
@@ -62,7 +64,7 @@ class AnimelonDownloader():
 		n_chunk = 2
 		num_bars = np.ceil(file_size / (n_chunk * block_size))
 		bar = None
-		if len(self.processList) == 1: 
+		if len(self.processList) == 1:
 			bar = progressbar.ProgressBar(maxval=num_bars).start()
 		with open(fileName, 'wb') as f:
 			for i, chunk in enumerate(video.iter_content(chunk_size=n_chunk * block_size)):
@@ -71,12 +73,50 @@ class AnimelonDownloader():
 					bar.update(i+1)
 		# (did not)Add a little sleep so you can see the bar progress
 
+	def getSubtitleFromJSON(self, resObj, languageSubList:list=None):
+		"""	Retrieves subtitle from API's resObj['resObj']['subtitles'][n]['content']['languageSub'] and uncipheres them
+			Returns a list of tuple [(languageSub, uncipheredContent), ... ]
+		"""
+		decryptor = subtitle_decryptor.SubtitleDecryptor()
+		if languageSubList is None:
+			languageSubList = self.subtitleTypes
+		subtitles = []
+		subObj = resObj["subtitles"]
+		for i in subObj:
+			subtitleList = i["content"]
+			for j in languageSubList:
+				if j in subtitleList.keys():
+					subtitles.append((j, decryptor.decrypt_subtitle(subtitleList[j])))
+		return subtitles
+
+	#def saveSubtitle(self, resObj, languageSubList:list=None, savePath:str=None):
+	#	"""	Parse the subtitle from resObj and saves them """
+	#	subs = self.getSubtitleFromJSON(resObj, languageSubList)
+	#	for i in subs:
+	#		self.saveSubtitleToFile(i[0], i[1], savePath=savePath)
+
+	def saveSubtitleToFile(self, languageSub, content, videoName:str="" ,savePath:str=None):
+		if savePath is None:
+			savePath = self.savePath
+		ext = ".ass"
+		if content[0:4] == b"\x31\x0A\x30\x30":
+			ext = ".srt"	
+		fileName = languageSub + "_" + videoName + ext
+		fileName = os.path.join(savePath, fileName)
+		with open(fileName, "wb") as f:
+			f.write(content)
+
+	def saveSubtitleFromResObj(self, resObj, videoName=None, languageSubList:list=None, savePath:str=None):
+		"""	Parse the subtitle from resObj and saves them """
+		subs = self.getSubtitleFromJSON(resObj, languageSubList)
+		for i in subs:
+			self.saveSubtitleToFile(i[0], i[1], savePath=savePath, videoName=videoName)
+	
 	def downloadFromResObj(self, resObj, fileName=None):
-		for i in resObj["subtitles"]:
-			print (i.keys())
-		exit(0)
+		title = resObj["title"]
+		self.saveSubtitleFromResObj(resObj, videoName=title, savePath=self.savePath)
 		if fileName is None:
-			fileName = resObj["title"] + ".mp4"
+			fileName = os.path.join(self.savePath, title + ".mp4")
 		video = (resObj["video"])
 		videoUrls = video["videoURLsData"]
 		#list of lists of lists of urls, yeah
@@ -221,8 +261,8 @@ if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Downloads videos from animelon.com')
 	parser.add_argument('videoURLs', metavar='videoURLs', type=str, nargs='+',
 						help='A series or video page URL, eg: https://animelon.com/series/Death%%20Note or https://animelon.com/video/579b1be6c13aa2a6b28f1364')
-	parser.add_argument('-d', "--sleepTime", metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
-	parser.add_argument('--savePath', metavar='savePath', help='Path to save', type=str, default="")
+	parser.add_argument("--sleepTime", '-d', metavar='delay', help="Sleep time between each download (defaults to 5)", type=int, default=5)
+	parser.add_argument("--savePath", '-f', metavar='savePath', help='Path to save', type=str, default="")
 	parser.add_argument('--forks', metavar='forks', help='Number of worker process for simultaneous downloads (defaults to 1)', type=int, default=1)
 	parser.add_argument('--maxTries', metavar='maxTries', help='Maximum number of retries in case of failed requests (defaults to 5)', type=int, default=5)
 	args = parser.parse_args()
