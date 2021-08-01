@@ -157,6 +157,12 @@ class AnimelonDownloader():
 	#	for i in subs:
 	#		self.saveSubtitleToFile(i[0], i[1], savePath=savePath)
 
+	def languageSubToIso(self, languageSub:str):
+		iso = {"englishSub" : "en", 'romajiSub' : "ja", "japaneseSub" : "jp", "hiraganaSub" : "hiragana"}
+		if languageSub in iso:
+			return (iso[languageSub])
+		return (languageSub)
+
 	def saveSubtitleToFile(self, languageSub, content, videoName:str="" ,savePath:str=None):
 		'''
 			Saves the subtitle to a file
@@ -172,8 +178,9 @@ class AnimelonDownloader():
 			savePath = self.savePath
 		ext = ".ass"
 		if content[0:4] == b"\x31\x0A\x30\x30": #srt magicbytes
-			ext = ".srt"	
-		fileName = languageSub + "_" + videoName + ext
+			ext = ".srt"
+		languageSub = self.languageSubToIso(languageSub)
+		fileName = videoName + "." + languageSub + ext
 		fileName = os.path.join(savePath, fileName)
 		with open(fileName, "wb") as f:
 			f.write(content)
@@ -276,11 +283,13 @@ class AnimelonDownloader():
 		jsonsed = json.loads(response.content)
 		return ((self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)))
 
-	def getEpisodeList(self, seriesUrl):
-		''' Returns a list of all the episodes of a series from the series page
+	def getEpisodeList(self, seriesURL):
+		''' 
+			Returns a list of all the episodes of a series from the series page
 			ex: https://animelon.com/series/Shoujo%20Shuumatsu%20Ryokou%20(Girls'%20Last%20Tour)
+			
 		'''
-		seriesName = seriesUrl.rsplit('/', 1)[-1]
+		seriesName = seriesURL.rsplit('/', 1)[-1]
 		url = self.baseURL + "api/series/" + seriesName
 		statusCode = 403
 		tries = 0
@@ -295,9 +304,9 @@ class AnimelonDownloader():
 		try:
 			jsoned = json.loads(response.text)
 			resObj = jsoned["resObj"]
-			if resObj is None and '\\' in seriesUrl:
-				seriesUrl = seriesUrl.replace('\\', '')
-				return ((self.getEpisodeList(seriesUrl)))
+			if resObj is None and '\\' in seriesURL:
+				seriesURL = seriesURL.replace('\\', '')
+				return ((self.getEpisodeList(seriesURL)))
 			assert (resObj is not None)
 		except Exception as e:
 			print ("Error: Could not parse anime info :\n", e, url , "\n", response, response.content, file=sys.stderr)
