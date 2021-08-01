@@ -2,4 +2,3 @@ requests
 progressbar
 numpy
 pycryptodome
-hashlib
