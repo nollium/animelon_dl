@@ -223,43 +223,21 @@ class AnimelonDownloader():
 		video = (resObj["video"])
 		videoURLs = video["videoURLsData"]
 		time.sleep(self.sleepTime)
-		for i in range(1, self.maxTries + 1):
-			for userAgentKey in videoURLs.keys():
-				# animelon will allow us to download the video only if we send the corresponding user agent
-				#also idk why the userAgent is formatted that way in the JSON, but we have to replace this.
-				self.updateUserAgent(userAgentKey.replace("=+(dot)+=", "."))
-				mobileUrlList = videoURLs[userAgentKey]
-				videoURLsSublist = mobileUrlList["videoURLs"]
-				for quality in self.qualityPriorities:
-					if quality in videoURLsSublist.keys():
-						videoURL = videoURLsSublist[quality]
-						videoStream = self.session.get(videoURL, stream=True)
-						if videoStream.status_code == 200:
-							self.downloadVideo(videoURL, fileName=fileName, stream=videoStream, quality=quality)
-							print ("Finished downloading ", fileName)
-							return (fileName)
-			print ("No video found for %s, retrying ... (%d tries left)" % (fileName, self.maxTries - i))
-			time.sleep(self.sleepTimeRetry * i)
-			
-		print ("No valid download link found for %s after %d retries" % (fileName, self.maxTries))
+		for userAgentKey in videoURLs.keys():
+			# animelon will allow us to download the video only if we send the corresponding user agent
+			#also idk why the userAgent is formatted that way in the JSON, but we have to replace this.
+			self.updateUserAgent(userAgentKey.replace("=+(dot)+=", "."))
+			mobileUrlList = videoURLs[userAgentKey]
+			videoURLsSublist = mobileUrlList["videoURLs"]
+			for quality in self.qualityPriorities:
+				if quality in videoURLsSublist.keys():
+					videoURL = videoURLsSublist[quality]
+					videoStream = self.session.get(videoURL, stream=True)
+					if videoStream.status_code == 200:
+						self.downloadVideo(videoURL, fileName=fileName, stream=videoStream, quality=quality)
+						print ("Finished downloading ", fileName)
+						return (fileName)
 		return (None)
-
-#unused and unfinished
-	def recursiveDownload(self, url, filename=None):
-		'''
-			Do not use
-		'''
-		response = get(url, headers=self.headers, stream=True)
-		if response.status_code == 200:
-			headers = response.headers
-			if (headers["Content-Type"] == "video/mp4"):
-				self.downloadVideo(url, fileName=filename, stream=response)
-				return ()
-			elif (headers["Content-Type"] == "application/json"):
-				data = json.loads(response.content)
-				if "resObj" in data.keys():
-					self.downloadFromResObj(data["resObj"], fileName=filename)
-					return ()
 
 	def downloadFromVideoPage(self, url=None, id=None, fileName=None, background=False, saveSubtitle=True):
 		''' Downloads a video from the video page or it's id
@@ -281,10 +259,18 @@ class AnimelonDownloader():
 			url = self.baseURL + "video/" + id
 		if id is None:
 			id = url.split("/")[-1]
+		
 		apiUrl = self.apiVideoFormat % (id)
-		response = get(apiUrl, headers=self.headers)
-		jsonsed = json.loads(response.content)
-		return ((self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)))
+		for tries in range(self.maxTries):
+			response = get(apiUrl, headers=self.headers)
+			jsonsed = json.loads(response.content)
+			file = None
+			file = self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)
+			if file is not None:
+				return (file)
+			time.sleep(self.sleepTime * tries)
+		print ("Failed to download ", fileName)
+		return (None)
 
 	def getEpisodeList(self, seriesURL):
 		''' 
