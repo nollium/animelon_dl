@@ -268,6 +268,7 @@ class AnimelonDownloader():
 			file = self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)
 			if file is not None:
 				return (file)
+			print ("Failed to download ", fileName, "retrying ... (", self.maxTries - tries, " tries left)"),
 			time.sleep(self.sleepTime * tries)
 		print ("Failed to download ", fileName)
 		return (None)
