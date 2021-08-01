@@ -11,7 +11,8 @@ Command line downloader for https://animelon.com/
        hashlib
 ## Usage:
 
-       $ ./animelon_dl.py -husage: animelon_dl.py [-h] [--sleepTime delay] [--savePath savePath]
+       $ ./animelon_dl.py -h
+       usage: animelon_dl.py [-h] [--sleepTime delay] [--savePath savePath]
                              [--forks forks] [--maxTries maxTries]
                              [--sleepTimeRetry sleepTimeRetry]
                              [--subtitlesType subtitlesType [subtitlesType ...]]
