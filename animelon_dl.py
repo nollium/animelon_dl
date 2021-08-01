@@ -14,7 +14,7 @@ import subtitle_decryptor
 class AnimelonDownloader():
 	def __init__(self, baseURL:str="https://animelon.com/", session=Session(), processMax:int=1, sleepTime:int=0,
 				maxTries:int=5, savePath:str="./", subtitlesTypes:list=["englishSub", "romajiSub", "hiraganaSub", "japaneseSub"],
-				sleepTimeRetry=5, qualityPriorities=["ozez", "stz", "tsz"],
+				sleepTimeRetry=5, qualityPriorities=["ozez", "stz", "tsz"], subtitlesOnly=False,
 				userAgent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.107 Safari/537.36"):
 		'''
 			Initialize the downloader
@@ -45,7 +45,7 @@ class AnimelonDownloader():
 		self.initSavePath(savePath)
 		self.subtitlesTypes = subtitlesTypes
 		self.qualityPriorities = qualityPriorities
-
+		self.subtitlesOnly = subtitlesOnly
 	def updateUserAgent(self, userAgent:str):
 		'''
 			Updates the user agent
@@ -74,7 +74,7 @@ class AnimelonDownloader():
 		while len(self.processList) >= processMax:
 			newList = [process for process in self.processList if process.is_alive()]
 			self.processList = newList
-			time.sleep(5)
+			time.sleep(self.sleepTime)
 
 	def launchBackgroundTask(self, function, args:tuple):
 		'''
@@ -196,7 +196,7 @@ class AnimelonDownloader():
 			fileNames.append(self.saveSubtitleToFile(sub[0], sub[1], savePath=savePath, videoName=videoName))
 		return (fileNames)
 	
-	def downloadFromResObj(self, resObj, fileName=None, saveSubtitle=True):
+	def downloadFromResObj(self, resObj, fileName=None, saveSubtitle=True, subtitlesOnly=False):
 		''' Downloads the video and it's subtitles from the API's JSON's resObj
 				Parameters:
 					resObj: the resOBJ JSON object from the JSON response from the API
@@ -208,8 +208,10 @@ class AnimelonDownloader():
 		title = resObj["title"]
 		if fileName is None:
 			fileName = os.path.join(self.savePath, title + ".mp4")
-		if saveSubtitle:
+		if (saveSubtitle):
 			self.saveSubtitlesFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
+		if (self.subtitlesOnly):
+			return (None)
 		video = (resObj["video"])
 		videoURLs = video["videoURLsData"]
 		time.sleep(self.sleepTime)
@@ -441,8 +443,10 @@ if __name__ == "__main__":
 	parser.add_argument('--sleepTimeRetry', metavar='sleepTimeRetry', help='Sleep time between retries (defaults to 5)', type=int, default=5)
 	parser.add_argument('--subtitlesType', metavar='subtitlesType', help='Subtitles types to download (englishSub, romajiSub, hiraganaSub, japaneseSub, none)',\
 		type=str, default=("englishSub", "romajiSub", "hiraganaSub", "japaneseSub"), nargs='+')
+	parser.add_argument('--subtitlesOnly', help='Only downloads subtitles', action='store', default=False, const=True, nargs='?')
 	args = parser.parse_args()
 	urls = args.videoURLs
-	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries, sleepTime=args.sleepTime, sleepTimeRetry=args.sleepTimeRetry, subtitlesTypes=args.subtitlesType)
+	downloader = AnimelonDownloader(savePath=args.savePath, processMax=args.forks, maxTries=args.maxTries,
+		sleepTime=args.sleepTime, sleepTimeRetry=args.sleepTimeRetry, subtitlesTypes=args.subtitlesType, subtitlesOnly=args.subtitlesOnly)
 	downloader.downloadFromURLList(urls)
 	exit(0)
