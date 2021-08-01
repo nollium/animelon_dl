@@ -263,13 +263,13 @@ class AnimelonDownloader():
 		apiUrl = self.apiVideoFormat % (id)
 		for tries in range(self.maxTries):
 			response = get(apiUrl, headers=self.headers)
-			jsonsed = json.loads(response.content)
-			file = None
-			file = self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)
-			if file is not None:
-				return (file)
-			print ("Failed to download ", fileName, "retrying ... (", self.maxTries - tries, " tries left)"),
-			time.sleep(self.sleepTime * tries)
+			if response.status_code == 200:		
+				jsonsed = json.loads(response.content)
+				file = self.downloadFromResObj(jsonsed["resObj"], fileName=fileName, saveSubtitle=saveSubtitle)
+				if file is not None:
+					return (file)
+				print ("Failed to download ", fileName, "retrying ... (", self.maxTries - tries, " tries left)"),
+				time.sleep(self.sleepTime * tries)
 		print ("Failed to download ", fileName)
 		return (None)
 
