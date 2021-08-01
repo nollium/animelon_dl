@@ -216,7 +216,8 @@ class AnimelonDownloader():
 		if fileName is None:
 			fileName = os.path.join(self.savePath, title + ".mp4")
 		if (saveSubtitle):
-			self.saveSubtitlesFromResObj(resObj, videoName=title, savePath=os.path.dirname(fileName))
+			self.saveSubtitlesFromResObj(resObj, videoName=os.path.basename(fileName).replace(".mp4", ""),
+				savePath=os.path.dirname(fileName))
 		if (self.subtitlesOnly):
 			return (None)
 		video = (resObj["video"])
